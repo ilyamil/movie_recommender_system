@@ -1,5 +1,6 @@
 import requests
 import pickle
+import yaml
 from bs4 import BeautifulSoup
 
 
@@ -22,3 +23,11 @@ def load_obj(path):
             return pickle.load(input_file)
         except Exception as e:
             print(e)
+
+
+def parse_configs():
+    with open('../config.yaml', 'r') as stream:
+        try:
+            print(yaml.safe_load(stream))
+        except yaml.YAMLError as exc:
+            print(exc)

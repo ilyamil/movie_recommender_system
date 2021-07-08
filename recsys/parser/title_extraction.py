@@ -1,4 +1,5 @@
 import re
+from recsys.parser.src.review_extraction import MAX_DELAY, MIN_DELAY
 import time
 import random
 import requests
@@ -11,17 +12,23 @@ from src.utils import get_soup, dump_obj, load_obj
 URL_TEMPLATE = 'https://www.imdb.com/search/title/?genres={}'\
                 '&sort=num_votes,desc&start={}&explore=genres'
 STEP = 50
+MIN_DELAY = 1
+MAX_DELAY = 2
 
 
 def get_filename(genre: str, rank: int, version: int) -> str:
-    return f'{genre}_from_{str(rank)}_to_{str(rank + STEP)}'
+    return f'{genre}_from_{str(rank)}_to_{str(rank + STEP)}_v{version}'
 
 
 class MovieIDExtractor:
+    """Contains methods to load and parse web pages,
+    then extract movie IDs.
+
+
+    """
     def __init__(self,
                  genres: Union[List[str], str],
                  n_titles: int,
-                 path: str,
                  min_delay: int,
                  max_delay: int):
         if not isinstance(genres, list):
@@ -32,7 +39,7 @@ class MovieIDExtractor:
 
     @staticmethod
     def get_max_titles(page: BeautifulSoup) -> int:
-        tag_text = container.find('div', class_='desc')
+        tag_text = page.find('div', class_='desc')
         max_titles = re.search('of(.+?)title', tag_text.span.text)
         return int(max_titles.group(1).strip().replace(',', ''))
 
@@ -41,7 +48,16 @@ class MovieIDExtractor:
         titles_raw = container.find_all('h3', class_='lister-item-header')
         return [title.a['href'] for title in titles_raw]
 
-    def get_raw_html(self, path: str) -> None:
+    def get_html_DOM(self, path: str, version: int) -> None:
+        """[summary]
+
+        Args:
+            path (str): [description]
+            version (int): [description]
+
+        Returns:
+            [type]: [description]
+        """
         msg_success = 'Dumped html page with rank {} - {} in {} genre'
         msg_failure = 'Bad status code for rank {} - {} in {} genre'
         msg_exception = 'Exception with message {}'
@@ -62,7 +78,6 @@ class MovieIDExtractor:
                         msg 
                 except Exception as e:
                     
-        
                 time.sleep(random.randint(min_delay, max_delay))
 
             msg = f'Collected {n_collected} titles in {genre.upper()} genre'
@@ -73,7 +88,7 @@ class MovieIDExtractor:
 
         return titles
 
-    def parse_html(self, path: str) -> None:
+    def parse_html(self, path: str, version: int) -> None:
         pass
 
 
