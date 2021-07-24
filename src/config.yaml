@@ -1,0 +1,41 @@
+data_collection:
+  logger_cfg:
+    filename: None
+    msg_format: '%(asctime)s %(message)s'
+    dt_format: '%Y-%m-%d %H:%M:%S'
+    level: 20
+
+  id_collection:
+    version: 1
+    raw_data_dir: 'data/raw/movie_id'
+    preprocessed_data_dir: 'data/preprocessed'
+    genres: all
+    n_titles: 100
+    request_delay:
+      min_delay: 0.5
+      max_delay: 1
+
+  review_collection:
+    version: 1
+    path: None 
+    request_delay:
+      min_delay: 1
+      max_delay: 2
+
+  details_collection:
+    version: 1
+    path: None
+    request_delay:
+      min_delay: 1
+      max_delay: 2
+
+model_training:
+  batch_size: 100
+  batch_num: 2
+
+model_inference:
+  delay: None
+
+application:
+  model_name: default
+  delay: None

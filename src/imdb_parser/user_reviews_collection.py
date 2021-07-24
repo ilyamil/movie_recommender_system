@@ -1,0 +1,2 @@
+class UserReviewsCollector:
+    pass
