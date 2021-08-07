@@ -1,14 +1,13 @@
 data_collection:
   logger_cfg:
-    filename: None
+    logs_dir: 'logs/data_collection' 
     msg_format: '%(asctime)s %(message)s'
     dt_format: '%Y-%m-%d %H:%M:%S'
     level: 20
 
   id_collection:
     version: 1
-    raw_data_dir: 'data/raw/movie_id'
-    preprocessed_data_dir: 'data/preprocessed'
+    data_dir: 'data/raw/identifiers'
     genres: all
     n_titles: 100
     request_delay:

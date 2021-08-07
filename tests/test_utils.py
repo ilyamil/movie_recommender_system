@@ -1,6 +1,5 @@
 import os
-import paths  # noqa
-from src.utils import get_filepath, dump_obj, load_obj, parse_config
+from recsys.utils import get_filepath, dump_obj, load_obj, parse_config
 
 
 class TestPickle:

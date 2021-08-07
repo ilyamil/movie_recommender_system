@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-from src.utils import wait
+from recsys.utils import wait
 
 warnings.filterwarnings('ignore')
 
@@ -14,7 +14,7 @@ COLUMNS = [
     'movie_id',
     'text',
     'rating',
-    'date',
+    'date',00000000000
     'title',
     'author',
     'helpfulness'
@@ -24,7 +24,7 @@ MAX_DELAY = 2
 RATING_DELAY = 1
 
 
-class MovieReviewsCollector:
+class ReviewsCollector:
     pass
 
 

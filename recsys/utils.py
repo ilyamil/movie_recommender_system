@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 DIR_PATH = os.path.dirname(__file__)
 ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, '..'))
-CONFIG_PATH = os.path.join(DIR_PATH, 'config.yaml')
+# CONFIG_PATH = os.path.join(DIR_PATH, 'config.yaml')
 
 
 def wait(min_time: int, max_time: int = None) -> None:
@@ -23,7 +23,7 @@ def get_filepath(dirname: str, filename: str) -> str:
     return os.path.join(ROOT_PATH, *dirname_tokens, filename)
 
 
-def dump_obj(obj, path):
+def dump_obj(obj, path: str):
     with open(path, 'wb') as output_file:
         try:
             pickle.dump(obj, output_file)
@@ -31,7 +31,7 @@ def dump_obj(obj, path):
             print(e)
 
 
-def load_obj(path):
+def load_obj(path: str):
     with open(path, 'rb') as input_file:
         try:
             return pickle.load(input_file)
@@ -39,8 +39,8 @@ def load_obj(path):
             print(e)
 
 
-def parse_config() -> Dict[str, Any]:
-    with open(CONFIG_PATH, 'r') as configs:
+def parse_config(path: str) -> Dict[str, Any]:
+    with open(path, 'r') as configs:
         try:
             cfg_parsed = yaml.safe_load(configs)
             return cfg_parsed

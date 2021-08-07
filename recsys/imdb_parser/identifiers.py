@@ -1,10 +1,9 @@
-import paths  # noqa
 import re
 import requests
 from tqdm import tqdm
 from typing import Union, List
 from bs4 import BeautifulSoup
-from src.utils import dump_obj, get_filepath, wait
+from recsys.utils import dump_obj, get_filepath, wait
 
 
 URL_TEMPLATE = (
@@ -14,7 +13,7 @@ URL_TEMPLATE = (
 STEP = 50
 
 
-class MovieIDCollector:
+class IDCollector:
     """Contains methods to load and parse web pages,
     then extract movie IDs.
 
@@ -81,7 +80,7 @@ class MovieIDCollector:
 
         return genre_id
 
-    def collect_genres_id(self, save_dir: str, version: int) -> None:
+    def collect_id(self, save_dir: str, version: int) -> None:
         """[summary]
 
         Args:
