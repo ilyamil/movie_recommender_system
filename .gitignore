@@ -2,5 +2,5 @@
 pytest_cache/
 recsys.egg-info/
 *pycache*
-*__pycache__*
+**/__pycache__
 *.code-workspace
