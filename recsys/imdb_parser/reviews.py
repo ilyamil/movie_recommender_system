@@ -14,7 +14,7 @@ COLUMNS = [
     'movie_id',
     'text',
     'rating',
-    'date',00000000000
+    'date',
     'title',
     'author',
     'helpfulness'

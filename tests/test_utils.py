@@ -18,5 +18,6 @@ class TestPickle:
 
 
 def test_parse_config():
-    cfg = parse_config()
+    cfg_path = get_filepath('scripts', 'config.yaml')
+    cfg = parse_config(cfg_path)
     assert bool(cfg)

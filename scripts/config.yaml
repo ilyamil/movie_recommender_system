@@ -1,32 +1,50 @@
-data_collection:
-  logger_cfg:
-    logs_dir: 'logs/data_collection' 
-    msg_format: '%(asctime)s %(message)s'
-    dt_format: '%Y-%m-%d %H:%M:%S'
-    level: 20
+logger:
+  level: 'INFO'
+  save_dir: 'logs/data_collection' 
+  msg_format: '%(asctime)s %(levelname)s %(message)s'
+  dt_format: '%Y-%m-%d %H:%M:%S'
 
-  id_collection:
-    version: 1
-    data_dir: 'data/raw/identifiers'
-    genres: all
-    n_titles: 100
+data_collection:
+  id:
+    id_version: 1
+    id_dir: 'data/raw/identifiers'
+    genres: 'all'
+    n_titles: 1000
     request_delay:
       min_delay: 0.5
       max_delay: 1
+    log_dir: 'identifiers.log'
 
-  review_collection:
-    version: 1
-    path: None 
+  reviews:
+    reviews_version: 1
+    reviews_dir: 'data/raw/reviews'
+    genres: 'all'
+    id_version: 1
+    id_dir: 'data/raw/identifiers'
     request_delay:
       min_delay: 1
       max_delay: 2
+    log_dir: 'reviews.log'
 
-  details_collection:
-    version: 1
-    path: None
+  details:
+    details_version: 1
+    details_dir: 'data/raw/details'
+    id_version: 1
+    id_dir: 'data/raw/identifiers'
     request_delay:
       min_delay: 1
       max_delay: 2
+    log_dir: 'details.log'
+
+  other_reviews:
+    or_version: 1
+    or_dir: 'data/raw/other_reviews'
+    id_version: 1
+    id_dir: 'data/raw/identifiers'
+    request_delay:
+      min_delay: 1
+      max_delay: 2
+    log_dir: 'other_reviews.log'
 
 model_training:
   batch_size: 100
