@@ -14,14 +14,16 @@ ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, '..'))
 def wait(min_time: int, max_time: int = None) -> None:
     if max_time:
         if min_time > max_time:
-            raise ValueError('min_time have to be no greater than max_time')
+            raise ValueError(
+                'min_time have to be no greater than max_time'
+            )
         sleep_for = random.uniform(min_time, max_time)
     else:
         sleep_for = min_time
     time.sleep(sleep_for)
 
 
-def get_filepath(dirname: str, filename: str) -> str:
+def get_full_path(dirname: str, filename: str) -> str:
     dirname_tokens = os.path.split(dirname)
     return os.path.join(ROOT_PATH, *dirname_tokens, filename)
 
@@ -53,10 +55,10 @@ def parse_config(path: str) -> Dict[str, Any]:
 
 def create_logger(logger_cfg: Dict[str, str], filename: str) -> Logger:
     log_level = logger_cfg['level']
-    log_dir = logger_cfg['save_dir']
+    log_dir = logger_cfg['log_dir']
     log_format = logger_cfg['msg_format']
     log_datefmt = logger_cfg['dt_format']
-    log_filename = get_filepath(log_dir, filename)
+    log_filename = get_full_path(log_dir, filename)
     logging.basicConfig(
         filename=log_filename,
         format=log_format,

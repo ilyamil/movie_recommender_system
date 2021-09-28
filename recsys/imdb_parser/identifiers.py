@@ -1,9 +1,10 @@
 import re
 import requests
+from tqdm import tqdm
 from logging import Logger
 from typing import Union, List
 from bs4 import BeautifulSoup
-from recsys.utils import dump_obj, get_filepath, wait
+from recsys.utils import dump_obj, get_full_path, wait
 
 
 URL_TEMPLATE = (
@@ -20,9 +21,9 @@ class IDCollector:
     Public method:
         collect: parses web pages to extract ID
     """
-    def __init__(self, version: int, genres: Union[List[str], str],
-                 n_titles: int, save_dir: str, logger: Logger,
-                 min_delay: int = 1, max_delay: int = 2):
+    def __init__(self, genres: Union[List[str], str], n_titles: int, 
+                 save_dir: str, logger: Logger, min_delay: int = 1,
+                 max_delay: int = 2):
         """
         Initializes collector class. All parameters related to collection
         of movie identifiers set up here.
@@ -32,9 +33,6 @@ class IDCollector:
         IMDB. There should be a trade-off setting up these parameters.
 
         Args:
-            version (int): version of parsing configuration. Each of the
-                           configuration can differ from another by one
-                           or many of following parameters
             genres (Union[List[str], str]): collect ID in these genres
             n_titles (int): number of movies to collect ID of in each genre
             save_dir (str): directory to save collected ID in certain genre
@@ -44,10 +42,12 @@ class IDCollector:
             max_delay (int, optional): maximum time in seconds before next
                                        request to IMDB server. Defaults to 2.
         """
-        self.genres = genres if isinstance(genres, list) else [genres]
+        if not isinstance(genres, (list, tuple, set)):
+            self.genres = [genres]
+        else:
+            self.genres = genres
         self.n_titles = n_titles
         self.save_dir = save_dir
-        self.version = version
         self.logger = logger
         self.min_delay = min_delay
         self.max_delay = max_delay
@@ -63,37 +63,37 @@ class IDCollector:
         titles_raw = page_html.find_all('h3', class_='lister-item-header')
         return [title.a['href'] for title in titles_raw]
 
+    def _collect_rank_id(self, genre, rank) -> List[str]:
+        url = URL_TEMPLATE.format(genre, rank)
+        rank_id = []
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                rank_id += self._get_movie_id(response.content)
+                self.logger.info(
+                    f'Collected {len(rank_id)} ID '
+                    f'in genre {genre.upper()}, '
+                    f'rank {rank}-{rank + STEP}'
+                )
+            else:
+                self.logger.warning(
+                    f'Bad status code in genre {genre.upper()}, '
+                    f'rank {rank}-{rank + STEP}'
+                )
+        except Exception as e:
+            self.logger.warning(
+                f'Exception in genre {genre.upper()}, '
+                f'rank {rank}-{rank + STEP} '
+                f'with message: {e}'
+            )
+        finally:
+            return rank_id
+
     def _collect_genre_id(self, genre: str, max_titles: int) -> List[int]:
         genre_id = []
         for rank in range(1, min(self.n_titles, max_titles), STEP):
-            url = URL_TEMPLATE.format(genre, rank)
-            try:
-                response = requests.get(url)
-                if response.status_code == 200:
-                    rank_id = self._get_movie_id(response.content)
-                    genre_id += rank_id
-                    msg = (
-                        f'Collected {len(rank_id)} ID '
-                        + f'in genre {genre.upper()}, '
-                        + f'rank {rank}-{rank + STEP}'
-                    )
-                    self.logger.info(msg)
-                else:
-                    msg = (
-                        f'Bad status code in genre {genre.upper()},'
-                        + f'rank {rank}-{rank + STEP}'
-                    )
-                    self.logger.warning(msg)
-            except Exception as e:
-                msg = (
-                    f'Exception in genre {genre.upper()},'
-                    + f'rank {rank}-{rank + STEP}'
-                    + f'with message: {e}'
-                )
-                self.logger.warning(msg)
-
-        wait(self.min_delay, self.max_delay)
-
+            genre_id += self._collect_rank_id(genre, rank)
+            wait(self.min_delay, self.max_delay)
         return genre_id
 
     def collect(self) -> None:
@@ -101,26 +101,28 @@ class IDCollector:
         Parses relevant web pages to extract movie identifiers and write
         them on disk.
         """
-        for genre in self.genres:
+        for genre in tqdm(self.genres):
             url = URL_TEMPLATE.format(genre, 1)
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
                     max_titles = self._get_num_of_movies(response.content)
+                    genre_id = self._collect_genre_id(genre, max_titles)
+
+                    filename = f'{genre.upper()}__{len(genre_id)}'
+                    filepath = get_full_path(self.save_dir, filename)
+                    dump_obj(genre_id, filepath)
+
+                    wait(self.min_delay, self.max_delay)
+
+                    self.logger.info(
+                        f'Collected {len(genre_id)} ID '
+                        f'in {genre.upper()} genre'
+                    )
+                else:
+                    raise Exception('Bad status code')
             except Exception as e:
-                msg = (
+                self.logger.warning(
                     f'Exception in finding num of movies with message: {e}.'
-                    + f'Genre {genre.upper()} skipped'
+                    f'Genre {genre.upper()} skipped'
                 )
-                self.logger.warning(msg)
-
-            wait(self.min_delay, self.max_delay)
-
-            genre_id = self._collect_genre_id(genre, max_titles)
-
-            filename = f'{genre.upper()}__{len(genre_id)}_v{self.version}'
-            filepath = get_filepath(self.save_dir, filename)
-            dump_obj(genre_id, filepath)
-
-            msg = f'Collected {len(genre_id)} ID in {genre.upper()} genre'
-            self.logger.info(msg)

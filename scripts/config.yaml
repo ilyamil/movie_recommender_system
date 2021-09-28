@@ -1,46 +1,36 @@
 logger:
   level: 'INFO'
-  save_dir: 'logs/data_collection' 
+  log_dir: 'logs/data_collection' 
   msg_format: '%(asctime)s %(levelname)s %(message)s'
   dt_format: '%Y-%m-%d %H:%M:%S'
 
 data_collection:
   id:
-    id_version: 1
-    id_dir: 'data/raw/identifiers'
+    dir: 'data/raw/identifiers'
     genres: 'all'
-    n_titles: 1000
+    n_titles: 2000
     request_delay:
-      min_delay: 0.5
-      max_delay: 1
+      min_delay: 0.2
+      max_delay: 0.5
     log_dir: 'identifiers.log'
 
   reviews:
-    reviews_version: 1
-    reviews_dir: 'data/raw/reviews'
+    dir: 'data/raw/reviews'
     genres: 'all'
-    id_version: 1
-    id_dir: 'data/raw/identifiers'
     request_delay:
       min_delay: 1
       max_delay: 2
     log_dir: 'reviews.log'
 
   details:
-    details_version: 1
-    details_dir: 'data/raw/details'
-    id_version: 1
-    id_dir: 'data/raw/identifiers'
+    dir: 'data/raw/details'
     request_delay:
       min_delay: 1
       max_delay: 2
     log_dir: 'details.log'
 
   other_reviews:
-    or_version: 1
-    or_dir: 'data/raw/other_reviews'
-    id_version: 1
-    id_dir: 'data/raw/identifiers'
+    dir: 'data/raw/other_reviews'
     request_delay:
       min_delay: 1
       max_delay: 2
