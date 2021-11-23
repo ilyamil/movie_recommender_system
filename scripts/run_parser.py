@@ -6,32 +6,7 @@ from recsys.imdb_parser.identifiers import IDCollector
 # from recsys.imdb_parser.other_reviews import OtherReviewsCollector
 
 
-ALL_GENRES = [
-    'documentary',
-    'action',
-    'adventure',
-    'animation',
-    'biography',
-    'comedy',
-    'crime',
-    'drama',
-    'family',
-    'fantasy',
-    'film_noir',
-    'history',
-    'horror',
-    'music',
-    'musical',
-    'mystery',
-    'romance',
-    'sci_fi',
-    'short',
-    'sport',
-    'thriller',
-    'war',
-    'western'
-]
-ALL_ATTRIBUTES = [
+ATTRIBUTES = [
     'id',
     'details',
     'reviews',
@@ -43,17 +18,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-at', '--attribute', type=str,
                     help=(
                         'Movie`s attribute to collect. '
-                        + f'Possible attributes: {", ".join(ALL_ATTRIBUTES)}'
+                        f'Possible attributes: {", ".join(ATTRIBUTES)}'
                         )
                     )
 args = parser.parse_args()
 attribute = args.attribute
+config = parse_config(CONFIG_FILE, 'data_collection')
 
 
-def run_parser(attribute):
-    collection_cfg = parse_config(CONFIG_FILE)['data_collection']
-    logger_cfg = parse_config(CONFIG_FILE)['logger']
+def run_parser(attribute, config):
     if attribute == 'id':
+        collector = IDCollector(config['id'], config['logger'])
+        collector.collect()
+
         save_dir = collection_cfg['id']['dir']
         genres = collection_cfg['id']['genres']
         n_titles = collection_cfg['id']['n_titles']
@@ -106,7 +83,7 @@ def run_parser(attribute):
         print(4)
     else:
         raise ValueError(
-            f'possible values for --attribute: {", ".join(ALL_ATTRIBUTES)}'
+            f'possible values for --attribute: {", ".join(ATTRIBUTES)}'
         )
 
 

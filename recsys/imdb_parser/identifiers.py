@@ -1,12 +1,36 @@
 import re
-import requests
 from tqdm import tqdm
-from logging import Logger
-from typing import Union, List
+from typing import List, Dict, Any
 from bs4 import BeautifulSoup
-from recsys.utils import dump_obj, get_full_path, wait
+from recsys.utils import (dump_obj, get_full_path,
+                          wait, get_url, create_logger)
 
 
+GENRES = [
+    'documentary',
+    'action',
+    'adventure',
+    'animation',
+    'biography',
+    'comedy',
+    'crime',
+    'drama',
+    'family',
+    'fantasy',
+    'film_noir',
+    'history',
+    'horror',
+    'music',
+    'musical',
+    'mystery',
+    'romance',
+    'sci_fi',
+    'short',
+    'sport',
+    'thriller',
+    'war',
+    'western'
+]
 URL_TEMPLATE = (
     'https://www.imdb.com/search/title/?genres={}'
     + '&sort=num_votes,desc&start={}&explore=genres'
@@ -21,36 +45,40 @@ class IDCollector:
     Public method:
         collect: parses web pages to extract ID
     """
-    def __init__(self, genres: Union[List[str], str], n_titles: int, 
-                 save_dir: str, logger: Logger, min_delay: int = 1,
-                 max_delay: int = 2):
+    def __init__(self, collector_config: Dict[str, Any],
+                 logger_config: Dict[str, Any]) -> None:
         """
         Initializes collector class. All parameters related to collection
-        of movie identifiers set up here.
+        of movie identifiers set up here using config.
         Using smaller min_delay and max_delay linearly speed up web scrapping
         but, on the other hand, it increases the workload on IMDB server which
         can lead to blocking of sending our requests and causing problems to
         IMDB. There should be a trade-off setting up these parameters.
-
-        Args:
-            genres (Union[List[str], str]): collect ID in these genres
-            n_titles (int): number of movies to collect ID of in each genre
-            save_dir (str): directory to save collected ID in certain genre
-            logger (Logger): configured logger
-            min_delay (int, optional): minimum time in seconds before next
-                                       request to IMDB server. Defaults to 1.
-            max_delay (int, optional): maximum time in seconds before next
-                                       request to IMDB server. Defaults to 2.
         """
-        if not isinstance(genres, (list, tuple, set)):
-            self.genres = [genres]
+        self._genres = collector_config['genres']
+        self._save_dir = collector_config['dir']
+        self._n_titles = collector_config['n_titles']
+        self._min_delay = collector_config['request_delay']['min_delay']
+        self._max_delay = collector_config['request_delay']['max_delay']
+        self._logger = create_logger(logger_config,
+                                     collector_config['log_dir'])
+
+        if not isinstance(self._genres, list):
+            self._genres = [self._genres]
+
+        if 'all' not in self._genres:
+            use_genres = set(self._genres).intersection(GENRES)
+            genre_diff = set(self._genres) - set(use_genres)
+            if genre_diff:
+                self._logger.warning(
+                    f'No {", ".join(genre_diff)} in possible genres'
+                )
+            if not use_genres:
+                no_genre_msg = 'No valid genres were passed'
+                self._logger.error(no_genre_msg)
+                raise ValueError(no_genre_msg)
         else:
-            self.genres = genres
-        self.n_titles = n_titles
-        self.save_dir = save_dir
-        self.logger = logger
-        self.min_delay = min_delay
-        self.max_delay = max_delay
+            self._genres = GENRES
 
     def _get_num_of_movies(self, page_content: bytes) -> int:
         page_html = BeautifulSoup(page_content, 'html.parser')

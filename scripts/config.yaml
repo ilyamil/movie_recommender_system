@@ -1,14 +1,14 @@
-logger:
-  level: 'INFO'
-  log_dir: 'logs/data_collection' 
-  msg_format: '%(asctime)s %(levelname)s %(message)s'
-  dt_format: '%Y-%m-%d %H:%M:%S'
-
 data_collection:
+  logger:
+    level: 'INFO'
+    dir: 'logs/data_collection' 
+    msg_format: '%(asctime)s %(levelname)s %(message)s'
+    dt_format: '%Y-%m-%d %H:%M:%S'
+
   id:
     dir: 'data/raw/identifiers'
     genres: 'all'
-    n_titles: 2000
+    n_titles: 50
     request_delay:
       min_delay: 0.2
       max_delay: 0.5
