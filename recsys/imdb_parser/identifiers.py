@@ -3,7 +3,7 @@ from tqdm import tqdm
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from recsys.utils import (dump_obj, get_full_path,
-                          wait, get_url, create_logger)
+                          wait, get_response, create_logger)
 
 
 GENRES = [
@@ -33,7 +33,7 @@ GENRES = [
 ]
 URL_TEMPLATE = (
     'https://www.imdb.com/search/title/?genres={}'
-    + '&sort=num_votes,desc&start={}&explore=genres'
+    '&sort=num_votes,desc&start={}&explore=genres'
 )
 STEP = 50
 
@@ -43,7 +43,7 @@ class IDCollector:
     Contains methods to load and parse web pages, then extract movie IDs.
 
     Public method:
-        collect: parses web pages to extract ID
+        collect: parses web pages to extract and save ID on disk.
     """
     def __init__(self, collector_config: Dict[str, Any],
                  logger_config: Dict[str, Any]) -> None:
@@ -95,33 +95,33 @@ class IDCollector:
         url = URL_TEMPLATE.format(genre, rank)
         rank_id = []
         try:
-            response = requests.get(url)
+            response = get_response(url)
             if response.status_code == 200:
                 rank_id += self._get_movie_id(response.content)
-                self.logger.info(
-                    f'Collected {len(rank_id)} ID '
-                    f'in genre {genre.upper()}, '
-                    f'rank {rank}-{rank + STEP}'
+                self._logger.info(
+                    f'Collected {len(rank_id)} identifiers'
+                    f' in genre {genre.upper()},'
+                    f' rank {rank}-{rank + STEP}'
                 )
             else:
-                self.logger.warning(
-                    f'Bad status code in genre {genre.upper()}, '
-                    f'rank {rank}-{rank + STEP}'
+                self._logger.warning(
+                    f'Bad status code in genre {genre.upper()},'
+                    f' rank {rank}-{rank + STEP}'
                 )
         except Exception as e:
-            self.logger.warning(
-                f'Exception in genre {genre.upper()}, '
-                f'rank {rank}-{rank + STEP} '
-                f'with message: {e}'
+            self._logger.warning(
+                f'Exception in genre {genre.upper()},'
+                f' rank {rank}-{rank + STEP}'
+                f' with message: {e}'
             )
         finally:
             return rank_id
 
     def _collect_genre_id(self, genre: str, max_titles: int) -> List[int]:
         genre_id = []
-        for rank in range(1, min(self.n_titles, max_titles), STEP):
+        for rank in range(1, min(self._n_titles, max_titles), STEP):
             genre_id += self._collect_rank_id(genre, rank)
-            wait(self.min_delay, self.max_delay)
+            wait(self._min_delay, self._max_delay)
         return genre_id
 
     def collect(self) -> None:
@@ -129,28 +129,28 @@ class IDCollector:
         Parses relevant web pages to extract movie identifiers and write
         them on disk.
         """
-        for genre in tqdm(self.genres):
+        for genre in tqdm(self._genres):
             url = URL_TEMPLATE.format(genre, 1)
             try:
-                response = requests.get(url)
+                response = get_response(url)
                 if response.status_code == 200:
                     max_titles = self._get_num_of_movies(response.content)
                     genre_id = self._collect_genre_id(genre, max_titles)
 
                     filename = f'{genre.upper()}__{len(genre_id)}'
-                    filepath = get_full_path(self.save_dir, filename)
+                    filepath = get_full_path(self._save_dir, filename)
                     dump_obj(genre_id, filepath)
 
-                    wait(self.min_delay, self.max_delay)
+                    wait(self._min_delay, self._max_delay)
 
-                    self.logger.info(
-                        f'Collected {len(genre_id)} ID '
-                        f'in {genre.upper()} genre'
+                    self._logger.info(
+                        f'Collected {len(genre_id)} identifiers'
+                        f' in {genre.upper()} genre in total'
                     )
                 else:
                     raise Exception('Bad status code')
             except Exception as e:
-                self.logger.warning(
+                self._logger.warning(
                     f'Exception in finding num of movies with message: {e}.'
-                    f'Genre {genre.upper()} skipped'
+                    f' Genre {genre.upper()} skipped'
                 )

@@ -1,5 +1,5 @@
 import argparse
-from recsys.utils import parse_config, create_logger
+from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
 # from recsys.imdb_parser.reviews import ReviewsCollector
 # from recsys.imdb_parser.details import DetailsCollector
@@ -9,75 +9,37 @@ from recsys.imdb_parser.identifiers import IDCollector
 ATTRIBUTES = [
     'id',
     'details',
-    'reviews',
-    'other_reviews'
+    'movie_reviews',
+    'user_movie_reviews'
 ]
 CONFIG_FILE = 'config.yaml'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-at', '--attribute', type=str,
+parser.add_argument('-a', '--attribute', type=str,
                     help=(
-                        'Movie`s attribute to collect. '
-                        f'Possible attributes: {", ".join(ATTRIBUTES)}'
+                        f"""
+                        Movie`s attribute to collect.
+                        Possible attribues: {", ".join(ATTRIBUTES)}.
+                        """
                         )
                     )
 args = parser.parse_args()
-attribute = args.attribute
 config = parse_config(CONFIG_FILE, 'data_collection')
 
 
-def run_parser(attribute, config):
-    if attribute == 'id':
+def run_parser(args, config):
+    if args.attribute == 'id':
         collector = IDCollector(config['id'], config['logger'])
         collector.collect()
-
-        save_dir = collection_cfg['id']['dir']
-        genres = collection_cfg['id']['genres']
-        n_titles = collection_cfg['id']['n_titles']
-        min_delay = collection_cfg['id']['request_delay']['min_delay']
-        max_delay = collection_cfg['id']['request_delay']['max_delay']
-        log_dir = collection_cfg['id']['log_dir']
-        logger = create_logger(logger_cfg, log_dir)
-
-        if isinstance(genres, list):
-            use_genres = set(genres).intersection(ALL_GENRES)
-            genre_diff = set(genres) - set(use_genres)
-            if genre_diff:
-                logger.warning(
-                    f'No {", ".join(genre_diff)} in possible genres'
-                )
-        elif isinstance(genres, str):
-            if genres == 'all':
-                use_genres = ALL_GENRES
-            elif genres in ALL_GENRES:
-                use_genres = genres
-            else:
-                msg = f'{genres} is not valid genre'
-                logger.error(msg)
-                raise ValueError(msg)
-        else:
-            msg = 'genres field in config file must be of type str or list'
-            logger.error(msg)
-            raise TypeError(msg)
-
-        if use_genres:
-            collector = IDCollector(use_genres, n_titles,
-                                    save_dir, logger,
-                                    min_delay, max_delay)
-            collector.collect()
-        else:
-            msg = 'No valid genres were passed'
-            logger.error(msg)
-            raise ValueError(msg)
-    elif attribute == 'details':
+    elif args.attribute == 'details':
         # collector = DetailsCollector()
         # collector.collect_details()
         print(2)
-    elif attribute == 'reviews':
+    elif args.attribute == 'movie_reviews':
         # collector = ReviewsCollector()
         # collector.collect_reviews()
         print(3)
-    elif attribute == 'other_reviews':
+    elif args.attribute == 'user_movie_reviews':
         # collector = OtherReviewsCollector()
         # collector.collect_other_reviews()
         print(4)
@@ -88,4 +50,4 @@ def run_parser(attribute, config):
 
 
 if __name__ == '__main__':
-    run_parser(attribute)
+    run_parser(args, config)
