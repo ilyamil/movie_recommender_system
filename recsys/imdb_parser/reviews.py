@@ -3,13 +3,15 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from recsys.utils import wait
-
 warnings.filterwarnings('ignore')
 
 
-REVIEWS_URL_TEMPLATE = 'https://www.imdb.com{}'\
-    + 'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
+REVIEWS_URL_TEMPLATE = (
+    'https://www.imdb.com{}'
+    'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
+)
 COLUMNS = [
     'movie_id',
     'text',
@@ -19,14 +21,63 @@ COLUMNS = [
     'author',
     'helpfulness'
 ]
-MIN_DELAY = 1
-MAX_DELAY = 2
-RATING_DELAY = 1
 
 
-class ReviewsCollector:
-    pass
+class ReviewCollector:
+    @staticmethod
+    def extract_text(tag: Tag) -> str:
+        try:
+            text_raw = tag.find('div', {'class': 'text show-more__control'})
+            return text_raw.text
+        except:
+            return None
 
+    @staticmethod
+    def extract_rating(tag: Tag) -> int:
+        try:
+            rating_raw = tag.find_all('span')
+            rating = rating_raw[1].text
+            # If no rating was given, span block containes review date
+            if len(rating) > 2:
+                return None
+            return int(rating)
+        except:
+            return None
+
+    @staticmethod
+    def extract_date(tag: Tag) -> str:
+        try:
+            date_raw = tag.find('span', {'class': 'review-date'})
+            return date_raw.text
+        except:
+            return None
+
+    @staticmethod
+    def extract_title(tag: Tag) -> str:
+        try:
+            title_raw = tag.find('a', {'class': 'title'})
+            return title_raw.text
+        except:
+            return None
+
+    @staticmethod
+    def extract_author(tag: Tag) -> str:
+        try:
+            author_raw = tag.find('span', {'class': 'display-name-link'})
+            return author_raw.a['href']
+        except:
+            return None
+
+    @staticmethod
+    def extract_helpfulness(tag: Tag) -> str:
+        try:
+            helpfulness_raw = tag.find('div', {'class': 'actions text-muted'})
+            return helpfulness_raw.text
+        except:
+            return None
+
+    def collect(self) -> None:
+        pass
 
 # def extract_text(container: BeautifulSoup):
 #     text_raw = container.find('div', {'class': 'text show-more__control'})

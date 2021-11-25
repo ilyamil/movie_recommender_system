@@ -44,8 +44,9 @@ def load_obj(path: str) -> Any:
 
 
 def write_csv(data: Iterable[Dict[str, Any]], path: str,
-              mode: str = 'a', fieldnames: str = 'infer') -> None:
-    with open(path, mode, newline='') as file:
+              fieldnames: str = 'infer', mode: str = 'a',
+              encoding: str = 'utf8') -> None:
+    with open(path, mode, newline='', encoding=encoding) as file:
         if fieldnames == 'infer':
             fieldnames_ = list(data[0].keys())
         else:
@@ -55,8 +56,8 @@ def write_csv(data: Iterable[Dict[str, Any]], path: str,
         writer.writerows(data)
 
 
-def read_csv(path):
-    with open(path, 'r', newline='') as file:
+def read_csv(path, encoding: str = 'utf8'):
+    with open(path, 'r', newline='', encoding=encoding) as file:
         return list(csv.DictReader(file))
 
 
