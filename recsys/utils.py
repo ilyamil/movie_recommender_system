@@ -82,8 +82,11 @@ def create_logger(cfg: Dict[str, Any], write_file: str) -> logging.Logger:
 
 @retry(
     retry=retry_if_exception_type((requests.ConnectionError,
-                                  requests.Timeout)),
+                                   requests.Timeout)),
     stop=stop_after_attempt(10), wait=wait_random(1, 2)
 )
-def get_response(url: str, **get_params) -> requests.Response:
+def send_request(url: str, session: requests.Session = None,
+                 **get_params) -> requests.Response:
+    if session:
+        return session.get(url, **get_params)
     return requests.get(url, **get_params)

@@ -1,10 +1,11 @@
 import warnings
-import pandas as pd
-from typing import List
+import requests
+from typing import List, Dict, Any, Optional
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from recsys.utils import wait
+
 warnings.filterwarnings('ignore')
 
 
@@ -13,7 +14,7 @@ REVIEWS_URL_TEMPLATE = (
     'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
 )
 COLUMNS = [
-    'movie_id',
+    'title_id',
     'text',
     'rating',
     'date',
@@ -21,19 +22,20 @@ COLUMNS = [
     'author',
     'helpfulness'
 ]
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36''
 
 
 class ReviewCollector:
     @staticmethod
-    def extract_text(tag: Tag) -> str:
+    def collect_text(tag: Tag) -> Optional[str]:
         try:
             text_raw = tag.find('div', {'class': 'text show-more__control'})
             return text_raw.text
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def extract_rating(tag: Tag) -> int:
+    def collect_rating(tag: Tag) -> Optional[int]:
         try:
             rating_raw = tag.find_all('span')
             rating = rating_raw[1].text
@@ -41,51 +43,95 @@ class ReviewCollector:
             if len(rating) > 2:
                 return None
             return int(rating)
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def extract_date(tag: Tag) -> str:
+    def collect_date(tag: Tag) -> Optional[str]:
         try:
             date_raw = tag.find('span', {'class': 'review-date'})
             return date_raw.text
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def extract_title(tag: Tag) -> str:
+    def collect_title(tag: Tag) -> Optional[str]:
         try:
             title_raw = tag.find('a', {'class': 'title'})
             return title_raw.text
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def extract_author(tag: Tag) -> str:
+    def collect_author(tag: Tag) -> Optional[str]:
         try:
             author_raw = tag.find('span', {'class': 'display-name-link'})
             return author_raw.a['href']
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def extract_helpfulness(tag: Tag) -> str:
+    def collect_helpfulness(tag: Tag) -> Optional[str]:
         try:
             helpfulness_raw = tag.find('div', {'class': 'actions text-muted'})
             return helpfulness_raw.text
-        except:
+        except Exception:
             return None
+
+    @staticmethod
+    def collect_review(id_: str, tag: Tag) -> Dict[str, Any]:
+        return {
+            'id': id_,
+            'text': ReviewCollector.collect_text(tag),
+            'rating': ReviewCollector.collect_rating(tag),
+            'date': ReviewCollector.collect_date(tag),
+            'title': ReviewCollector.collect_title(tag),
+            'author': ReviewCollector.collect_author(tag),
+            'helpfulness': ReviewCollector.collect_helpfulness(tag)
+        }
+
+    def collect_id_reviews(self, id_: str) -> List[Dict[str, Any]]:
+        start_url = f'https://www.imdb.com{id_}reviews?ref_=tt_urv'
+        link = f'https://www.imdb.com{id_}reviews/_ajax'
+
+        params = {
+            'ref_': 'undefined',
+            'paginationKey': ''
+        }
+
+        with requests.Session() as s:
+            s.headers['User-Agent'] = USER_AGENT
+            res = s.get(start_url)
+
+            id_reviews = []
+            while True:
+                soup = BeautifulSoup(res.text, 'lxml')
+                for tag in soup.select('.review-tag'):
+                    review = ReviewCollector.collect_review(id_, tag)
+                    id_reviews.append(review)
+
+                    try:
+                        pagination_key = (
+                            soup
+                            .select_one(".load-more-data[data-key]")
+                            .get("data-key")
+                        )
+                    except AttributeError:
+                        break
+
+                    params['paginationKey'] = pagination_key
+                    res = s.get(link, params=params)
 
     def collect(self) -> None:
         pass
 
-# def extract_text(container: BeautifulSoup):
-#     text_raw = container.find('div', {'class': 'text show-more__control'})
+# def extract_text(tag: BeautifulSoup):
+#     text_raw = tag.find('div', {'class': 'text show-more__control'})
 #     return text_raw.text
 
 
-# def extract_rating(container: BeautifulSoup):
-#     rating_raw = container.find_all('span')
+# def extract_rating(tag: BeautifulSoup):
+#     rating_raw = tag.find_all('span')
 #     rating = rating_raw[1].text
 #     # If no rating was given, span block containes review date
 #     if len(rating) > 2:
@@ -93,42 +139,42 @@ class ReviewCollector:
 #     return float(rating)
 
 
-# def extract_date(container: BeautifulSoup) -> str:
-#     date_raw = container.find('span', {'class': 'review-date'})
+# def extract_date(tag: BeautifulSoup) -> str:
+#     date_raw = tag.find('span', {'class': 'review-date'})
 #     return date_raw.text
 
 
-# def extract_title(container: BeautifulSoup) -> str:
-#     title_raw = container.find('a', {'class': 'title'})
+# def extract_title(tag: BeautifulSoup) -> str:
+#     title_raw = tag.find('a', {'class': 'title'})
 #     return title_raw.text
 
 
-# def extract_author(container: BeautifulSoup) -> str:
-#     author_raw = container.find('span', {'class': 'display-name-link'})
+# def extract_author(tag: BeautifulSoup) -> str:
+#     author_raw = tag.find('span', {'class': 'display-name-link'})
 #     return author_raw.a['href']
 
 
-# def extract_helpfulness(container: BeautifulSoup) -> str:
-#     helpfulness_raw = container.find('div', {'class': 'actions text-muted'})
+# def extract_helpfulness(tag: BeautifulSoup) -> str:
+#     helpfulness_raw = tag.find('div', {'class': 'actions text-muted'})
 #     return helpfulness_raw.text
 
 
-# def extract_review(container: BeautifulSoup) -> List[str]:
-#     """Parses html container to extract main a review's attributes.
+# def extract_review(tag: BeautifulSoup) -> List[str]:
+#     """Parses html tag to extract main a review's attributes.
 
 #     Args:
-#         container (BeautifulSoup): html contaienr wrapped up by BS class.
+#         tag (BeautifulSoup): html contaienr wrapped up by BS class.
 
 #     Returns:
 #         List[str]: Collection of attributes: text, rating,
 #         date, title, author and helpfullnes of a review.
 #     """
-#     text = extract_text(container)
-#     rating = extract_rating(container)
-#     date = extract_date(container)
-#     title = extract_title(container)
-#     author = extract_author(container)
-#     helpfulness = extract_helpfulness(container)
+#     text = extract_text(tag)
+#     rating = extract_rating(tag)
+#     date = extract_date(tag)
+#     title = extract_title(tag)
+#     author = extract_author(tag)
+#     helpfulness = extract_helpfulness(tag)
 #     return [text, rating, date, title, author, helpfulness]
 
 
@@ -153,12 +199,12 @@ class ReviewCollector:
 #     for rating in range(lowest_rating, highest_rating + 1):
 #         url = REVIEWS_URL_TEMPLATE.format(title_id, rating)
 #         soup = get_soup(url)
-#         containers = soup.find_all('div', class_='review-container')
-#         if not containers:
+#         tags = soup.find_all('div', class_='review-tag')
+#         if not tags:
 #             continue
 
 #         try:
-#             reviews = [[title_id] + extract_review(cnt) for cnt in containers]
+#             reviews = [[title_id] + extract_review(cnt) for cnt in tags]
 #             movie_reviews.extend(reviews)
 #         except Exception as e:
 #             print(f'Exception raised on title {title_id}, rating {rating}',

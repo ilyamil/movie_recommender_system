@@ -1,7 +1,5 @@
 import os
 import logging
-
-import requests
 from recsys import utils
 
 
@@ -62,4 +60,4 @@ def test_csv_io():
 
 def test_get_response():
     url = 'https://google.com'
-    assert utils.get_response(url).status_code == 200
+    assert utils.send_request(url).status_code == 200

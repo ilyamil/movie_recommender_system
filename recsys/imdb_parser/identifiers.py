@@ -3,7 +3,7 @@ from tqdm import tqdm
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from recsys.utils import (dump_obj, get_full_path,
-                          wait, get_response, create_logger)
+                          wait, send_request, create_logger)
 
 
 GENRES = [
@@ -80,13 +80,15 @@ class IDCollector:
         else:
             self._genres = GENRES
 
-    def _get_num_of_movies(self, page_content: bytes) -> int:
+    @staticmethod
+    def get_movies_num(page_content: bytes) -> int:
         page_html = BeautifulSoup(page_content, 'html.parser')
         tag_text = page_html.find('div', class_='desc')
         max_titles = re.search('of(.+?)title', tag_text.span.text)
         return int(max_titles.group(1).strip().replace(',', ''))
 
-    def _get_movie_id(self, page_content: bytes) -> List[str]:
+    @staticmethod
+    def collect_movie_id(page_content: bytes) -> List[str]:
         page_html = BeautifulSoup(page_content, 'html.parser')
         titles_raw = page_html.find_all('h3', class_='lister-item-header')
         return [title.a['href'] for title in titles_raw]
@@ -95,9 +97,9 @@ class IDCollector:
         url = URL_TEMPLATE.format(genre, rank)
         rank_id = []
         try:
-            response = get_response(url)
+            response = send_request(url)
             if response.status_code == 200:
-                rank_id += self._get_movie_id(response.content)
+                rank_id += IDCollector.collect_movie_id(response.content)
                 self._logger.info(
                     f'Collected {len(rank_id)} identifiers'
                     f' in genre {genre.upper()},'
@@ -132,10 +134,10 @@ class IDCollector:
         for genre in tqdm(self._genres):
             url = URL_TEMPLATE.format(genre, 1)
             try:
-                response = get_response(url)
+                response = send_request(url)
                 if response.status_code == 200:
-                    max_titles = self._get_num_of_movies(response.content)
-                    genre_id = self._collect_genre_id(genre, max_titles)
+                    max_titles = IDCollector.get_movies_num(response.content)
+                    genre_id = IDCollector.collect_genre_id(genre, max_titles)
 
                     filename = f'{genre.upper()}__{len(genre_id)}'
                     filepath = get_full_path(self._save_dir, filename)
