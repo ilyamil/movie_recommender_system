@@ -5,8 +5,8 @@ from recsys import utils
 
 class TestPickle:
     test_obj = [1, 2, 3, 5]
-    test_dir = 'tests/test_data'
-    test_filename = 'test.obj'
+    test_dir = os.path.join('tests', 'data')
+    test_filename = 'list.obj'
     test_path = utils.get_full_path(test_dir, test_filename)
 
     def test_dump_obj(self):
@@ -50,7 +50,7 @@ def test_csv_io():
             {'first_name': 'John', 'last_name': 'Doe'},
             {'first_name': 'Harry', 'last_name': 'Potter'}
     ]
-    path = os.path.join('test_data', 'test_csv.csv')
+    path = os.path.join('data', 'csv.csv')
     utils.write_csv(data, path, fieldnames=fieldnames)
 
     assert os.path.isfile(path)
@@ -58,6 +58,6 @@ def test_csv_io():
     os.remove(path)
 
 
-def test_get_response():
+def test_send_request():
     url = 'https://google.com'
     assert utils.send_request(url).status_code == 200

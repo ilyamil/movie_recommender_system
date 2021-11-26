@@ -4,15 +4,15 @@ from typing import List, Dict, Any, Optional
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from recsys.utils import wait
+from recsys.utils import wait, send_request
 
 warnings.filterwarnings('ignore')
 
 
-REVIEWS_URL_TEMPLATE = (
-    'https://www.imdb.com{}'
-    'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
-)
+# REVIEWS_URL_TEMPLATE = (
+#     'https://www.imdb.com{}'
+#     'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
+# )
 COLUMNS = [
     'title_id',
     'text',
@@ -22,10 +22,19 @@ COLUMNS = [
     'author',
     'helpfulness'
 ]
-USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36''
+USER_AGENT = (
+    'Mozilla/5.0 (Windows NT 6.1)'
+    'AppleWebKit/537.36 (KHTML, like Gecko)'
+    'Chrome/88.0.4324.150 Safari/537.36'
+)
+START_URL_TEMPLATE = 'https://www.imdb.com{}reviews?ref_=tt_urv'
+LINK_URL_TEMPLATE = 'https://www.imdb.com{}reviews/_ajax'
 
 
 class ReviewCollector:
+    def __init__(self) -> None:
+        pass
+
     @staticmethod
     def collect_text(tag: Tag) -> Optional[str]:
         try:
@@ -78,8 +87,7 @@ class ReviewCollector:
         except Exception:
             return None
 
-    @staticmethod
-    def collect_review(id_: str, tag: Tag) -> Dict[str, Any]:
+    def collect_review(self, id_: str, tag: Tag) -> Dict[str, Any]:
         return {
             'id': id_,
             'text': ReviewCollector.collect_text(tag),
@@ -91,17 +99,17 @@ class ReviewCollector:
         }
 
     def collect_id_reviews(self, id_: str) -> List[Dict[str, Any]]:
-        start_url = f'https://www.imdb.com{id_}reviews?ref_=tt_urv'
-        link = f'https://www.imdb.com{id_}reviews/_ajax'
-
-        params = {
-            'ref_': 'undefined',
-            'paginationKey': ''
+        request_params = {
+            'params': {
+                'ref_': 'undefined',
+                'paginationKey': ''
+            }
         }
 
-        with requests.Session() as s:
-            s.headers['User-Agent'] = USER_AGENT
-            res = s.get(start_url)
+        with requests.Session() as session:
+            session.headers['User-Agent'] = USER_AGENT
+            start_url = START_URL_TEMPLATE.format(id_)
+            res = send_request(start_url, session=session)
 
             id_reviews = []
             while True:
@@ -119,11 +127,12 @@ class ReviewCollector:
                     except AttributeError:
                         break
 
-                    params['paginationKey'] = pagination_key
-                    res = s.get(link, params=params)
+                    link_url = LINK_URL_TEMPLATE.format(id_)
+                    request_params['params']['paginationKey'] = pagination_key
+                    res = send_request(link_url, **request_params)
 
     def collect(self) -> None:
-        pass
+        test_id = '/title/tt0238883/'
 
 # def extract_text(tag: BeautifulSoup):
 #     text_raw = tag.find('div', {'class': 'text show-more__control'})

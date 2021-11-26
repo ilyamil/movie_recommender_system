@@ -1,7 +1,7 @@
 import os
 import time
 import random
-import pickle
+import dill
 import yaml
 import logging
 import csv
@@ -33,14 +33,14 @@ def get_full_path(dirname: str, filename: str) -> str:
     return os.path.join(ROOT_PATH, *dirname_tokens, filename)
 
 
-def dump_obj(obj, path: str) -> None:
-    with open(path, 'wb') as output_file:
-        pickle.dump(obj, output_file)
+def dump_obj(obj: Any, path: str, mode: str = 'wb') -> None:
+    with open(path, mode) as output_file:
+        dill.dump(obj, output_file)
 
 
-def load_obj(path: str) -> Any:
-    with open(path, 'rb') as input_file:
-        return pickle.load(input_file)
+def load_obj(path: str, mode: str = 'rb') -> Any:
+    with open(path, mode) as input_file:
+        return dill.load(input_file)
 
 
 def write_csv(data: Iterable[Dict[str, Any]], path: str,
@@ -86,7 +86,7 @@ def create_logger(cfg: Dict[str, Any], write_file: str) -> logging.Logger:
     stop=stop_after_attempt(10), wait=wait_random(1, 2)
 )
 def send_request(url: str, session: requests.Session = None,
-                 **get_params) -> requests.Response:
+                 **request_params) -> requests.Response:
     if session:
-        return session.get(url, **get_params)
-    return requests.get(url, **get_params)
+        return session.get(url, **request_params)
+    return requests.get(url, **request_params)
