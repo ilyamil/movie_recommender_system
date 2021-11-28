@@ -82,14 +82,9 @@ class IDCollector:
 
         n_titles = collector_config['n_titles']
         pct_titles = collector_config['pct_titles']
-        if n_titles and pct_titles:
+        if (n_titles and pct_titles) or (not n_titles and not pct_titles):
             raise ValueError(
                 'Only one of these arguments needs to be set in config file:'
-                'n_titles or pct_titles'
-            )
-        if not n_titles and not pct_titles:
-            raise ValueError(
-                'One of these arguments needs to be set in config file:'
                 'n_titles or pct_titles'
             )
         if pct_titles and not 0 < pct_titles < 100:
@@ -165,8 +160,8 @@ class IDCollector:
                     max_titles = IDCollector.get_movies_cnt(response.content)
                     genre_id = IDCollector.collect_genre_id(genre, max_titles)
 
-                    filename = f'{genre.upper()}__{len(genre_id)}'
-                    filepath = get_full_path(self._save_dir, filename)
+                    filepath = get_full_path(self._save_dir,
+                                             f'{genre.upper()}.pkl')
                     dump_obj(genre_id, filepath)
 
                     wait(self._min_delay, self._max_delay)
