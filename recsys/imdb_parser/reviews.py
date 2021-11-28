@@ -32,7 +32,7 @@ LINK_URL_TEMPLATE = 'https://www.imdb.com{}reviews/_ajax'
 
 
 class ReviewCollector:
-    def __init__(self) -> None:
+    def __init__(self, collector_config: Dict[str, Any]) -> None:
         pass
 
     @staticmethod

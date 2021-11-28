@@ -6,6 +6,7 @@ import yaml
 import logging
 import csv
 import requests
+from pathlib import Path
 from typing import Dict, Any, Iterable
 from tenacity import (retry, wait_random,
                       stop_after_attempt,
@@ -34,6 +35,7 @@ def get_full_path(dirname: str, filename: str) -> str:
 
 
 def dump_obj(obj: Any, path: str, mode: str = 'wb') -> None:
+    Path(path).mkdir(parents=True, exist_ok=True)
     with open(path, mode) as output_file:
         dill.dump(obj, output_file)
 
@@ -46,6 +48,7 @@ def load_obj(path: str, mode: str = 'rb') -> Any:
 def write_csv(data: Iterable[Dict[str, Any]], path: str,
               fieldnames: str = 'infer', mode: str = 'a',
               encoding: str = 'utf8') -> None:
+    Path(path).mkdir(parents=True, exist_ok=True)
     with open(path, mode, newline='', encoding=encoding) as file:
         if fieldnames == 'infer':
             fieldnames_ = list(data[0].keys())

@@ -6,24 +6,27 @@ data_collection:
     dt_format: '%Y-%m-%d %H:%M:%S'
 
   id:
-    dir: 'data/raw/identifiers'
+    dir: 'data/raw/identifiers/1pct'
     genres: 'all'
-    n_titles: 50
+    n_titles: None
+    pct_titles: 0.1
     request_delay:
       min_delay: 0.2
       max_delay: 0.5
     log_dir: 'identifiers.log'
 
   reviews:
-    dir: 'data/raw/reviews'
+    dir: 'data/raw/reviews/1pct'
+    id_dir: 'data/raw/identifiers/1pct'
     genres: 'all'
     request_delay:
-      min_delay: 1
-      max_delay: 2
+      min_delay: 0.2
+      max_delay: 0.5
     log_dir: 'reviews.log'
 
   details:
     dir: 'data/raw/details'
+    id_dir: 'data/raw/identifiers'
     request_delay:
       min_delay: 1
       max_delay: 2
