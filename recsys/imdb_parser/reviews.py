@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from recsys.utils import wait, send_request
+from recsys.utils import wait, send_request, create_logger
 
 warnings.filterwarnings('ignore')
 
@@ -32,8 +32,9 @@ LINK_URL_TEMPLATE = 'https://www.imdb.com{}reviews/_ajax'
 
 
 class ReviewCollector:
-    def __init__(self, collector_config: Dict[str, Any]) -> None:
-        pass
+    def __init__(self, collector_config: Dict[str, Any],
+                 logger_config: Dict[str, Any]) -> None:
+        self._logger = 
 
     @staticmethod
     def collect_text(tag: Tag) -> Optional[str]:

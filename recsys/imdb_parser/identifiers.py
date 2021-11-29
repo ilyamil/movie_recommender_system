@@ -1,6 +1,5 @@
-import re
-from tqdm import tqdm
 from typing import List, Dict, Any
+from tqdm import tqdm
 from bs4 import BeautifulSoup
 from recsys.utils import (dump_obj, get_full_path,
                           wait, send_request, create_logger)
@@ -32,31 +31,49 @@ MOVIE_COUNT_BY_GENRE = {
 }
 GENRES = list(MOVIE_COUNT_BY_GENRE.keys())
 URL_TEMPLATE = (
-    'https://www.imdb.com/search/title/?genres={}'
-    '&sort=num_votes,desc&start={}&explore=genres'
+    'https://www.imdb.com/search/title/?title_type=feature&genres={}'
+    '&sort=num_votes,desc&start={}&explore=genres&ref_=adv_nxt'
 )
 STEP = 50
 
 
 class IDCollector:
     """
-    Contains methods to load and parse web pages, then extract movie IDs.
+    Contains methods for parsing IMDB movie search web pages,
+    then extract movie identifiers from them.
 
     Public method:
-        collect: parses web pages to extract and save ID on disk.
+        collect: parses pages and saves IDs on a disk.
     """
     def __init__(self, collector_config: Dict[str, Any],
                  logger_config: Dict[str, Any]) -> None:
         """
         Initializes collector class. All parameters related to collection
         of movie identifiers set up here using config.
-        Using smaller min_delay and max_delay linearly speed up web scrapping
-        but, on the other hand, it increases the workload on IMDB server which
-        can lead to blocking of sending our requests and causing problems to
-        IMDB. There should be a trade-off setting up these parameters.
+        The following fields must be set in config file:
+            1. dir - a directory to save identifiers.
+            2. log_file - a file to write all logs while collecting IDs
+            3. genres - genres of movies to collect.
+                All possible genres can be found there
+                https://www.imdb.com/feature/genre/?ref_=nv_ch_gr
+                under "Popular Movies by Genre" title.
+            4. n_titles - number of movies' identifiers to collect in
+                a specified genre.
+            5. pct_titles - percent of total movies available to collect
+                in a specified genre.
+            6. request_delay: min_delay and max_delay - lower and upper bound
+                of waiting time before next bunch of identifiers will
+                be processed.
+        Notes:
+        * One of these fields "n_titles" or "pct_titles" must be set to None,
+            while the other set to desired value.
+        * Using smaller min_delay and max_delay linearly speed up web
+            scrapping but, on the other hand, it increases the workload
+            on IMDB server which is not totally ethical and could lead to
+            blocking of our requests. This trade-off is up to you.
         """
         self._logger = create_logger(logger_config,
-                                     collector_config['log_dir'])
+                                     collector_config['log_file'])
         self._save_dir = collector_config['dir']
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
@@ -82,17 +99,22 @@ class IDCollector:
 
         n_titles = collector_config['n_titles']
         pct_titles = collector_config['pct_titles']
-        if (n_titles and pct_titles) or (not n_titles and not pct_titles):
+        if pct_titles == 'None':
+            pct_titles = None
+        if n_titles == 'None':
+            n_titles = None
+        if not (n_titles or pct_titles):
             raise ValueError(
-                'Only one of these arguments needs to be set in config file:'
-                'n_titles or pct_titles'
+                'Only one of these arguments needs to be set'
+                ' in config file: n_titles or pct_titles'
             )
-        if pct_titles and not 0 < pct_titles < 100:
-            raise ValueError('pct_titles must lie in the interval [0, 100]')
-
         if pct_titles:
+            if not 0 < pct_titles < 100:
+                raise ValueError(
+                    'pct_titles must lie in the interval [0, 100]'
+                )
             self._sample_size = {
-                genre: int(pct_titles * MOVIE_COUNT_BY_GENRE[genre])
+                genre: int(pct_titles / 100 * MOVIE_COUNT_BY_GENRE[genre])
                 for genre in self._genres
             }
         else:
@@ -100,13 +122,6 @@ class IDCollector:
                 genre: min(n_titles, MOVIE_COUNT_BY_GENRE[genre])
                 for genre in self._genres
             }
-
-    @staticmethod
-    def get_movies_cnt(page_content: bytes) -> int:
-        page_html = BeautifulSoup(page_content, 'html.parser')
-        tag_text = page_html.find('div', class_='desc')
-        max_titles = re.search('of(.+?)title', tag_text.span.text)
-        return int(max_titles.group(1).strip().replace(',', ''))
 
     @staticmethod
     def collect_movie_id(page_content: bytes) -> List[str]:
@@ -140,40 +155,35 @@ class IDCollector:
         finally:
             return rank_id
 
-    def _collect_genre_id(self, genre: str, max_titles: int) -> List[int]:
+    def _collect_genre_id(self, genre: str) -> List[int]:
         genre_id = []
-        for rank in range(1, min(self._sample_size[genre], max_titles), STEP):
+        tqdm_params = {
+            'iterable': range(1, self._sample_size[genre] + 1, STEP),
+            'desc': genre,
+            'unit_scale': STEP
+        }
+        for rank in tqdm(**tqdm_params):
             genre_id += self._collect_rank_id(genre, rank)
+
             wait(self._min_delay, self._max_delay)
+
         return genre_id
 
     def collect(self) -> None:
         """
         Parses relevant web pages to extract movie identifiers and write
-        them on disk.
+        them on a disk.
         """
-        for genre in tqdm(self._genres):
-            url = URL_TEMPLATE.format(genre, 1)
-            try:
-                response = send_request(url)
-                if response.status_code == 200:
-                    max_titles = IDCollector.get_movies_cnt(response.content)
-                    genre_id = IDCollector.collect_genre_id(genre, max_titles)
+        print('Collection of identifiers...')
+        for genre in self._genres:
+            genre_id = self._collect_genre_id(genre)
 
-                    filepath = get_full_path(self._save_dir,
-                                             f'{genre.upper()}.pkl')
-                    dump_obj(genre_id, filepath)
+            filepath = get_full_path(self._save_dir, f'{genre.upper()}.pkl')
+            dump_obj(genre_id, filepath)
 
-                    wait(self._min_delay, self._max_delay)
+            wait(self._min_delay, self._max_delay)
 
-                    self._logger.info(
-                        f'Collected {len(genre_id)} identifiers'
-                        f' in {genre.upper()} genre in total'
-                    )
-                else:
-                    raise Exception('Bad status code')
-            except Exception as e:
-                self._logger.warning(
-                    f'Exception in finding num of movies with message: {e}.'
-                    f' Genre {genre.upper()} skipped'
-                )
+            self._logger.info(
+                    f'Collected {len(genre_id)} identifiers'
+                    f' in {genre.upper()} genre in total'
+            )

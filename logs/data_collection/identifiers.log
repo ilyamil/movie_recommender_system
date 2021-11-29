@@ -1,157 +1,54 @@
-2021-09-28 19:05:16 INFO Collected 50 ID in genre DOCUMENTARY, rank 1-51
-2021-09-28 19:05:19 INFO Collected 50 ID in genre DOCUMENTARY, rank 51-101
-2021-09-28 19:05:22 INFO Collected 50 ID in genre DOCUMENTARY, rank 101-151
-2021-09-28 19:05:25 INFO Collected 50 ID in genre DOCUMENTARY, rank 151-201
-2021-09-28 19:05:28 INFO Collected 50 ID in genre DOCUMENTARY, rank 201-251
-2021-09-28 19:05:31 INFO Collected 50 ID in genre DOCUMENTARY, rank 251-301
-2021-09-28 19:05:34 INFO Collected 50 ID in genre DOCUMENTARY, rank 301-351
-2021-09-28 19:05:37 INFO Collected 50 ID in genre DOCUMENTARY, rank 351-401
-2021-09-28 19:05:39 INFO Collected 50 ID in genre DOCUMENTARY, rank 401-451
-2021-09-28 19:05:42 INFO Collected 50 ID in genre DOCUMENTARY, rank 451-501
-2021-09-28 19:05:45 INFO Collected 50 ID in genre DOCUMENTARY, rank 501-551
-2021-09-28 19:05:48 INFO Collected 50 ID in genre DOCUMENTARY, rank 551-601
-2021-09-28 19:05:51 INFO Collected 50 ID in genre DOCUMENTARY, rank 601-651
-2021-09-28 19:05:54 INFO Collected 50 ID in genre DOCUMENTARY, rank 651-701
-2021-09-28 19:05:58 INFO Collected 50 ID in genre DOCUMENTARY, rank 701-751
-2021-09-28 19:06:02 INFO Collected 50 ID in genre DOCUMENTARY, rank 751-801
-2021-09-28 19:06:04 INFO Collected 50 ID in genre DOCUMENTARY, rank 801-851
-2021-09-28 19:06:08 INFO Collected 50 ID in genre DOCUMENTARY, rank 851-901
-2021-09-28 19:06:11 INFO Collected 50 ID in genre DOCUMENTARY, rank 901-951
-2021-09-28 19:06:14 INFO Collected 50 ID in genre DOCUMENTARY, rank 951-1001
-2021-09-28 19:06:18 INFO Collected 50 ID in genre DOCUMENTARY, rank 1001-1051
-2021-09-28 19:06:21 INFO Collected 50 ID in genre DOCUMENTARY, rank 1051-1101
-2021-09-28 19:06:24 INFO Collected 50 ID in genre DOCUMENTARY, rank 1101-1151
-2021-09-28 19:06:27 INFO Collected 50 ID in genre DOCUMENTARY, rank 1151-1201
-2021-09-28 19:06:30 INFO Collected 50 ID in genre DOCUMENTARY, rank 1201-1251
-2021-09-28 19:06:33 INFO Collected 50 ID in genre DOCUMENTARY, rank 1251-1301
-2021-09-28 19:06:37 INFO Collected 50 ID in genre DOCUMENTARY, rank 1301-1351
-2021-09-28 19:06:40 INFO Collected 50 ID in genre DOCUMENTARY, rank 1351-1401
-2021-09-28 19:06:43 INFO Collected 50 ID in genre DOCUMENTARY, rank 1401-1451
-2021-09-28 19:06:46 INFO Collected 50 ID in genre DOCUMENTARY, rank 1451-1501
-2021-09-28 19:06:49 INFO Collected 50 ID in genre DOCUMENTARY, rank 1501-1551
-2021-09-28 19:06:54 INFO Collected 50 ID in genre DOCUMENTARY, rank 1551-1601
-2021-09-28 19:06:57 INFO Collected 50 ID in genre DOCUMENTARY, rank 1601-1651
-2021-09-28 19:07:00 INFO Collected 50 ID in genre DOCUMENTARY, rank 1651-1701
-2021-09-28 19:07:03 INFO Collected 50 ID in genre DOCUMENTARY, rank 1701-1751
-2021-09-28 19:07:06 INFO Collected 50 ID in genre DOCUMENTARY, rank 1751-1801
-2021-09-28 19:07:10 INFO Collected 50 ID in genre DOCUMENTARY, rank 1801-1851
-2021-09-28 19:07:14 INFO Collected 50 ID in genre DOCUMENTARY, rank 1851-1901
-2021-09-28 19:07:17 INFO Collected 50 ID in genre DOCUMENTARY, rank 1901-1951
-2021-09-28 19:07:22 INFO Collected 50 ID in genre DOCUMENTARY, rank 1951-2001
-2021-09-28 19:07:23 INFO Collected 2000 ID in DOCUMENTARY genre
-2021-09-28 19:07:26 INFO Collected 50 ID in genre ACTION, rank 1-51
-2021-09-28 19:07:29 INFO Collected 50 ID in genre ACTION, rank 51-101
-2021-09-28 19:07:32 INFO Collected 50 ID in genre ACTION, rank 101-151
-2021-09-28 19:07:34 INFO Collected 50 ID in genre ACTION, rank 151-201
-2021-09-28 19:07:36 INFO Collected 50 ID in genre ACTION, rank 201-251
-2021-09-28 19:07:39 INFO Collected 50 ID in genre ACTION, rank 251-301
-2021-09-28 19:07:41 INFO Collected 50 ID in genre ACTION, rank 301-351
-2021-09-28 19:07:43 INFO Collected 50 ID in genre ACTION, rank 351-401
-2021-09-28 19:07:46 INFO Collected 50 ID in genre ACTION, rank 401-451
-2021-09-28 19:07:49 INFO Collected 50 ID in genre ACTION, rank 451-501
-2021-09-28 19:07:51 INFO Collected 50 ID in genre ACTION, rank 501-551
-2021-09-28 19:07:54 INFO Collected 50 ID in genre ACTION, rank 551-601
-2021-09-28 19:07:57 INFO Collected 50 ID in genre ACTION, rank 601-651
-2021-09-28 19:07:59 INFO Collected 50 ID in genre ACTION, rank 651-701
-2021-09-28 19:08:02 INFO Collected 50 ID in genre ACTION, rank 701-751
-2021-09-28 19:08:04 INFO Collected 50 ID in genre ACTION, rank 751-801
-2021-09-28 19:08:07 INFO Collected 50 ID in genre ACTION, rank 801-851
-2021-09-28 19:08:09 INFO Collected 50 ID in genre ACTION, rank 851-901
-2021-09-28 19:08:12 INFO Collected 50 ID in genre ACTION, rank 901-951
-2021-09-28 19:08:14 INFO Collected 50 ID in genre ACTION, rank 951-1001
-2021-09-28 19:08:16 INFO Collected 50 ID in genre ACTION, rank 1001-1051
-2021-09-28 19:08:20 INFO Collected 50 ID in genre ACTION, rank 1051-1101
-2021-09-28 19:08:22 INFO Collected 50 ID in genre ACTION, rank 1101-1151
-2021-09-28 19:08:25 INFO Collected 50 ID in genre ACTION, rank 1151-1201
-2021-09-28 19:08:27 INFO Collected 50 ID in genre ACTION, rank 1201-1251
-2021-09-28 19:08:30 INFO Collected 50 ID in genre ACTION, rank 1251-1301
-2021-09-28 19:15:46 WARNING Exception in genre ACTION, rank 1301-1351 with message: ('Connection aborted.', ConnectionAbortedError(10053, 'Программа на вашем хост-компьютере разорвала установленное подключение', None, 10053, None))
-2021-09-28 19:15:47 WARNING Exception in genre ACTION, rank 1351-1401 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1351&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4FD0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:47 WARNING Exception in genre ACTION, rank 1401-1451 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1401&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4DF0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:47 WARNING Exception in genre ACTION, rank 1451-1501 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1451&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4FA0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:47 WARNING Exception in genre ACTION, rank 1501-1551 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1501&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4D60>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:48 WARNING Exception in genre ACTION, rank 1551-1601 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1551&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4F40>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:48 WARNING Exception in genre ACTION, rank 1601-1651 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1601&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4E20>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:49 WARNING Exception in genre ACTION, rank 1651-1701 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1651&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4FD0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:49 WARNING Exception in genre ACTION, rank 1701-1751 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1701&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4DF0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:49 WARNING Exception in genre ACTION, rank 1751-1801 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1751&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4FA0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:49 WARNING Exception in genre ACTION, rank 1801-1851 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1801&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4D60>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:50 WARNING Exception in genre ACTION, rank 1851-1901 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1851&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4F40>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:50 WARNING Exception in genre ACTION, rank 1901-1951 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1901&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4E20>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:50 WARNING Exception in genre ACTION, rank 1951-2001 with message: HTTPSConnectionPool(host='www.imdb.com', port=443): Max retries exceeded with url: /search/title/?genres=action&sort=num_votes,desc&start=1951&explore=genres (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x00000152374E4FD0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed'))
-2021-09-28 19:15:51 INFO Collected 1300 ID in ACTION genre
-2021-09-28 19:15:54 INFO Collected 50 ID in genre ADVENTURE, rank 1-51
-2021-09-28 19:15:56 INFO Collected 50 ID in genre ADVENTURE, rank 51-101
-2021-09-28 19:15:58 INFO Collected 50 ID in genre ADVENTURE, rank 101-151
-2021-09-28 19:16:00 INFO Collected 50 ID in genre ADVENTURE, rank 151-201
-2021-09-28 19:16:02 INFO Collected 50 ID in genre ADVENTURE, rank 201-251
-2021-09-28 19:16:03 INFO Collected 50 ID in genre ADVENTURE, rank 251-301
-2021-09-28 19:16:05 INFO Collected 50 ID in genre ADVENTURE, rank 301-351
-2021-09-28 19:16:07 INFO Collected 50 ID in genre ADVENTURE, rank 351-401
-2021-09-28 19:16:09 INFO Collected 50 ID in genre ADVENTURE, rank 401-451
-2021-09-28 19:16:11 INFO Collected 50 ID in genre ADVENTURE, rank 451-501
-2021-09-28 19:16:12 INFO Collected 50 ID in genre ADVENTURE, rank 501-551
-2021-09-28 19:16:14 INFO Collected 50 ID in genre ADVENTURE, rank 551-601
-2021-09-28 19:16:16 INFO Collected 50 ID in genre ADVENTURE, rank 601-651
-2021-09-28 19:16:18 INFO Collected 50 ID in genre ADVENTURE, rank 651-701
-2021-09-28 19:16:20 INFO Collected 50 ID in genre ADVENTURE, rank 701-751
-2021-09-28 19:16:21 INFO Collected 50 ID in genre ADVENTURE, rank 751-801
-2021-09-28 19:16:23 INFO Collected 50 ID in genre ADVENTURE, rank 801-851
-2021-09-28 19:16:25 INFO Collected 50 ID in genre ADVENTURE, rank 851-901
-2021-09-28 19:16:27 INFO Collected 50 ID in genre ADVENTURE, rank 901-951
-2021-09-28 19:16:31 INFO Collected 50 ID in genre ADVENTURE, rank 1001-1051
-2021-11-24 23:41:53 INFO 
-                    Collected 50 identifiers
-                    in genre ACTION,
-                    rank 1-51
-                    
-2021-11-24 23:41:54 INFO 
-                        Collected 50 ID
-                        in ACTION genre
-                        
-2021-11-24 23:54:25 INFO Collected 50 identifiers in genre DOCUMENTARY, rank 1-51
-2021-11-24 23:54:26 INFO Collected 50 ID in DOCUMENTARY genre
-2021-11-24 23:54:30 INFO Collected 50 identifiers in genre ACTION, rank 1-51
-2021-11-24 23:54:30 INFO Collected 50 ID in ACTION genre
-2021-11-24 23:54:35 INFO Collected 50 identifiers in genre ADVENTURE, rank 1-51
-2021-11-24 23:54:35 INFO Collected 50 ID in ADVENTURE genre
-2021-11-24 23:54:40 INFO Collected 50 identifiers in genre ANIMATION, rank 1-51
-2021-11-24 23:54:41 INFO Collected 50 ID in ANIMATION genre
-2021-11-24 23:54:45 INFO Collected 50 identifiers in genre BIOGRAPHY, rank 1-51
-2021-11-24 23:54:46 INFO Collected 50 ID in BIOGRAPHY genre
-2021-11-24 23:54:50 INFO Collected 50 identifiers in genre COMEDY, rank 1-51
-2021-11-24 23:54:51 INFO Collected 50 ID in COMEDY genre
-2021-11-24 23:54:55 INFO Collected 50 identifiers in genre CRIME, rank 1-51
-2021-11-24 23:54:55 INFO Collected 50 ID in CRIME genre
-2021-11-24 23:55:00 INFO Collected 50 identifiers in genre DRAMA, rank 1-51
-2021-11-24 23:55:00 INFO Collected 50 ID in DRAMA genre
-2021-11-24 23:55:05 INFO Collected 50 identifiers in genre FAMILY, rank 1-51
-2021-11-24 23:55:05 INFO Collected 50 ID in FAMILY genre
-2021-11-24 23:55:09 INFO Collected 50 identifiers in genre FANTASY, rank 1-51
-2021-11-24 23:55:10 INFO Collected 50 ID in FANTASY genre
-2021-11-24 23:55:14 INFO Collected 50 identifiers in genre FILM_NOIR, rank 1-51
-2021-11-24 23:55:14 INFO Collected 50 ID in FILM_NOIR genre
-2021-11-24 23:55:18 INFO Collected 50 identifiers in genre HISTORY, rank 1-51
-2021-11-24 23:55:19 INFO Collected 50 ID in HISTORY genre
-2021-11-24 23:55:24 INFO Collected 50 identifiers in genre HORROR, rank 1-51
-2021-11-24 23:55:25 INFO Collected 50 ID in HORROR genre
-2021-11-24 23:55:30 INFO Collected 50 identifiers in genre MUSIC, rank 1-51
-2021-11-24 23:55:31 INFO Collected 50 ID in MUSIC genre
-2021-11-24 23:55:35 INFO Collected 50 identifiers in genre MUSICAL, rank 1-51
-2021-11-24 23:55:36 INFO Collected 50 ID in MUSICAL genre
-2021-11-24 23:55:40 INFO Collected 50 identifiers in genre MYSTERY, rank 1-51
-2021-11-24 23:55:40 INFO Collected 50 ID in MYSTERY genre
-2021-11-24 23:55:44 INFO Collected 50 identifiers in genre ROMANCE, rank 1-51
-2021-11-24 23:55:45 INFO Collected 50 ID in ROMANCE genre
-2021-11-24 23:55:49 INFO Collected 50 identifiers in genre SCI_FI, rank 1-51
-2021-11-24 23:55:50 INFO Collected 50 ID in SCI_FI genre
-2021-11-24 23:55:55 INFO Collected 50 identifiers in genre SHORT, rank 1-51
-2021-11-24 23:55:55 INFO Collected 50 ID in SHORT genre
-2021-11-24 23:55:59 INFO Collected 50 identifiers in genre SPORT, rank 1-51
-2021-11-24 23:56:00 INFO Collected 50 ID in SPORT genre
-2021-11-24 23:56:04 INFO Collected 50 identifiers in genre THRILLER, rank 1-51
-2021-11-24 23:56:04 INFO Collected 50 ID in THRILLER genre
-2021-11-24 23:56:08 INFO Collected 50 identifiers in genre WAR, rank 1-51
-2021-11-24 23:56:08 INFO Collected 50 ID in WAR genre
-2021-11-24 23:56:12 INFO Collected 50 identifiers in genre WESTERN, rank 1-51
-2021-11-24 23:56:13 INFO Collected 50 ID in WESTERN genre
+2021-11-29 23:02:43 INFO Collected 50 identifiers in genre ACTION, rank 1-51
+2021-11-29 23:02:44 INFO Collected 50 identifiers in ACTION genre in total
+2021-11-29 23:02:46 INFO Collected 50 identifiers in genre ADVENTURE, rank 1-51
+2021-11-29 23:02:47 INFO Collected 50 identifiers in ADVENTURE genre in total
+2021-11-29 23:02:49 INFO Collected 50 identifiers in genre ANIMATION, rank 1-51
+2021-11-29 23:02:50 INFO Collected 50 identifiers in ANIMATION genre in total
+2021-11-29 23:02:52 INFO Collected 50 identifiers in genre BIOGRAPHY, rank 1-51
+2021-11-29 23:02:53 INFO Collected 50 identifiers in BIOGRAPHY genre in total
+2021-11-29 23:02:55 INFO Collected 50 identifiers in genre COMEDY, rank 1-51
+2021-11-29 23:02:55 INFO Collected 50 identifiers in COMEDY genre in total
+2021-11-29 23:02:57 INFO Collected 50 identifiers in genre CRIME, rank 1-51
+2021-11-29 23:02:58 INFO Collected 50 identifiers in CRIME genre in total
+2021-11-29 23:02:59 INFO Collected 0 identifiers in genre DOCUMENTARY, rank 1-51
+2021-11-29 23:03:00 INFO Collected 0 identifiers in DOCUMENTARY genre in total
+2021-11-29 23:03:02 INFO Collected 50 identifiers in genre DRAMA, rank 1-51
+2021-11-29 23:03:02 INFO Collected 50 identifiers in DRAMA genre in total
+2021-11-29 23:03:04 INFO Collected 50 identifiers in genre FAMILY, rank 1-51
+2021-11-29 23:03:05 INFO Collected 50 identifiers in FAMILY genre in total
+2021-11-29 23:03:06 INFO Collected 50 identifiers in genre FANTASY, rank 1-51
+2021-11-29 23:03:07 INFO Collected 50 identifiers in FANTASY genre in total
+2021-11-29 23:03:09 INFO Collected 50 identifiers in genre FILM-NOIR, rank 1-51
+2021-11-29 23:03:10 INFO Collected 50 identifiers in FILM-NOIR genre in total
+2021-11-29 23:03:11 INFO Collected 50 identifiers in genre HISTORY, rank 1-51
+2021-11-29 23:03:12 INFO Collected 50 identifiers in HISTORY genre in total
+2021-11-29 23:03:13 INFO Collected 50 identifiers in genre HORROR, rank 1-51
+2021-11-29 23:03:14 INFO Collected 50 identifiers in HORROR genre in total
+2021-11-29 23:03:16 INFO Collected 50 identifiers in genre MUSIC, rank 1-51
+2021-11-29 23:03:17 INFO Collected 50 identifiers in MUSIC genre in total
+2021-11-29 23:03:18 INFO Collected 50 identifiers in genre MUSICAL, rank 1-51
+2021-11-29 23:03:19 INFO Collected 50 identifiers in MUSICAL genre in total
+2021-11-29 23:03:21 INFO Collected 50 identifiers in genre MYSTERY, rank 1-51
+2021-11-29 23:03:22 INFO Collected 50 identifiers in MYSTERY genre in total
+2021-11-29 23:03:25 INFO Collected 50 identifiers in genre ROMANCE, rank 1-51
+2021-11-29 23:03:25 INFO Collected 50 identifiers in ROMANCE genre in total
+2021-11-29 23:03:27 INFO Collected 50 identifiers in genre SCI-FI, rank 1-51
+2021-11-29 23:03:28 INFO Collected 50 identifiers in SCI-FI genre in total
+2021-11-29 23:03:29 INFO Collected 0 identifiers in genre SHORT, rank 1-51
+2021-11-29 23:03:29 INFO Collected 0 identifiers in SHORT genre in total
+2021-11-29 23:03:31 INFO Collected 50 identifiers in genre SPORT, rank 1-51
+2021-11-29 23:03:32 INFO Collected 50 identifiers in SPORT genre in total
+2021-11-29 23:03:34 INFO Collected 50 identifiers in genre THRILLER, rank 1-51
+2021-11-29 23:03:35 INFO Collected 50 identifiers in THRILLER genre in total
+2021-11-29 23:03:36 INFO Collected 50 identifiers in genre WAR, rank 1-51
+2021-11-29 23:03:37 INFO Collected 50 identifiers in WAR genre in total
+2021-11-29 23:03:39 INFO Collected 50 identifiers in genre WESTERN, rank 1-51
+2021-11-29 23:03:40 INFO Collected 50 identifiers in WESTERN genre in total
+2021-11-29 23:12:16 INFO Collected 50 identifiers in genre ACTION, rank 1-51
+2021-11-29 23:12:17 INFO Collected 50 identifiers in ACTION genre in total
+2021-11-29 23:16:13 INFO Collected 50 identifiers in genre ACTION, rank 1-51
+2021-11-29 23:16:13 INFO Collected 50 identifiers in ACTION genre in total
+2021-11-29 23:18:15 INFO Collected 50 identifiers in genre ACTION, rank 1-51
+2021-11-29 23:18:16 INFO Collected 50 identifiers in ACTION genre in total
+2021-11-29 23:18:57 INFO Collected 50 identifiers in genre ACTION, rank 1-51
+2021-11-29 23:18:58 INFO Collected 50 identifiers in ACTION genre in total

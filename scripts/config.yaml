@@ -7,13 +7,13 @@ data_collection:
 
   id:
     dir: 'data/raw/identifiers/1pct'
+    log_file: 'identifiers.log'
     genres: 'all'
-    n_titles: None
-    pct_titles: 0.1
+    n_titles: 50
+    pct_titles: None
     request_delay:
       min_delay: 0.2
       max_delay: 0.5
-    log_dir: 'identifiers.log'
 
   reviews:
     dir: 'data/raw/reviews/1pct'
