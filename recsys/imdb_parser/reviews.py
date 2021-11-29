@@ -1,3 +1,4 @@
+import os
 import warnings
 import requests
 from typing import List, Dict, Any, Optional
@@ -9,10 +10,6 @@ from recsys.utils import wait, send_request, create_logger
 warnings.filterwarnings('ignore')
 
 
-# REVIEWS_URL_TEMPLATE = (
-#     'https://www.imdb.com{}'
-#     'reviews?sort=helpfulnessScore&dir=desc&ratingFilter={}'
-# )
 COLUMNS = [
     'title_id',
     'text',
@@ -34,7 +31,36 @@ LINK_URL_TEMPLATE = 'https://www.imdb.com{}reviews/_ajax'
 class ReviewCollector:
     def __init__(self, collector_config: Dict[str, Any],
                  logger_config: Dict[str, Any]) -> None:
-        self._logger = 
+        log_file = collector_config['log_file']
+        self._logger = create_logger(logger_config, log_file)
+        self._dir = collector_config['dir']
+        self._id_dir = collector_config['id_dir']
+        self._min_delay = collector_config['request_delay']['min_delay']
+        self._max_delay = collector_config['request_delay']['max_delay']
+        self._genres = collector_config['genres']
+
+        if not isinstance(self._genres, list):
+            self._genres = [self._genres]
+        self._genres = [genre.lower() for genre in self._genres]
+        id_dir = collector_config['id_dir']
+        available_genres = [
+            genre.split('.')[0]
+            for genre in os.listdir(id_dir)
+        ]
+        if 'all' not in self._genres:
+            use_genres = set(self._genres).intersection(available_genres)
+            genre_diff = set(self._genres) - set(use_genres)
+            if genre_diff:
+                self._logger.warning(
+                    f'No {", ".join(genre_diff)} in possible genres'
+                )
+            if not use_genres:
+                no_genre_msg = 'No valid genres were passed'
+                self._logger.error(no_genre_msg)
+                raise ValueError(no_genre_msg)
+            self._genres = use_genres
+        else:
+            self._genres = available_genres
 
     @staticmethod
     def collect_text(tag: Tag) -> Optional[str]:

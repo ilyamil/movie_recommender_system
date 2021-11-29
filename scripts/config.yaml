@@ -18,11 +18,11 @@ data_collection:
   reviews:
     dir: 'data/raw/reviews/1pct'
     id_dir: 'data/raw/identifiers/1pct'
+    log_file: 'reviews.log'
     genres: 'all'
     request_delay:
       min_delay: 0.2
       max_delay: 0.5
-    log_dir: 'reviews.log'
 
   details:
     dir: 'data/raw/details'

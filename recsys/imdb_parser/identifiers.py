@@ -72,13 +72,13 @@ class IDCollector:
             on IMDB server which is not totally ethical and could lead to
             blocking of our requests. This trade-off is up to you.
         """
-        self._logger = create_logger(logger_config,
-                                     collector_config['log_file'])
+        log_file = collector_config['log_file']
+        self._logger = create_logger(logger_config, log_file)
         self._save_dir = collector_config['dir']
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
-
         self._genres = collector_config['genres']
+        
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
         self._genres = [genre.lower() for genre in self._genres]
@@ -178,7 +178,7 @@ class IDCollector:
         for genre in self._genres:
             genre_id = self._collect_genre_id(genre)
 
-            filepath = get_full_path(self._save_dir, f'{genre.upper()}.pkl')
+            filepath = get_full_path(self._save_dir, f'{genre}.pkl')
             dump_obj(genre_id, filepath)
 
             wait(self._min_delay, self._max_delay)
