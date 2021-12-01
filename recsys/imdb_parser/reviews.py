@@ -5,7 +5,9 @@ from typing import List, Dict, Any, Optional
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from recsys.utils import wait, send_request, create_logger
+from recsys.utils import (wait, send_request,
+                          create_logger, load_obj,
+                          get_full_path, write_csv)
 
 warnings.filterwarnings('ignore')
 
@@ -33,7 +35,7 @@ class ReviewCollector:
                  logger_config: Dict[str, Any]) -> None:
         log_file = collector_config['log_file']
         self._logger = create_logger(logger_config, log_file)
-        self._dir = collector_config['dir']
+        self._save_dir = collector_config['dir']
         self._id_dir = collector_config['id_dir']
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
@@ -42,10 +44,10 @@ class ReviewCollector:
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
         self._genres = [genre.lower() for genre in self._genres]
-        id_dir = collector_config['id_dir']
+
         available_genres = [
             genre.split('.')[0]
-            for genre in os.listdir(id_dir)
+            for genre in os.listdir(get_full_path(self._id_dir))
         ]
         if 'all' not in self._genres:
             use_genres = set(self._genres).intersection(available_genres)
@@ -114,7 +116,8 @@ class ReviewCollector:
         except Exception:
             return None
 
-    def collect_review(self, id_: str, tag: Tag) -> Dict[str, Any]:
+    @staticmethod
+    def collect_review(id_: str, tag: Tag) -> Dict[str, Any]:
         return {
             'id': id_,
             'text': ReviewCollector.collect_text(tag),
@@ -125,7 +128,7 @@ class ReviewCollector:
             'helpfulness': ReviewCollector.collect_helpfulness(tag)
         }
 
-    def collect_id_reviews(self, id_: str) -> List[Dict[str, Any]]:
+    def collect_title_reviews(self, id_: str) -> List[Dict[str, Any]]:
         request_params = {
             'params': {
                 'ref_': 'undefined',
@@ -138,28 +141,54 @@ class ReviewCollector:
             start_url = START_URL_TEMPLATE.format(id_)
             res = send_request(start_url, session=session)
 
-            id_reviews = []
-            while True:
+            title_reviews = []
+            load_another_reviews = True
+            while load_another_reviews:
+                reviews_batch = []
                 soup = BeautifulSoup(res.text, 'lxml')
-                for tag in soup.select('.review-tag'):
+                for tag in soup.select('.review-container'):
                     review = ReviewCollector.collect_review(id_, tag)
-                    id_reviews.append(review)
+                    reviews_batch.append(review)
 
-                    try:
-                        pagination_key = (
+                try:
+                    pagination_key = (
                             soup
                             .select_one(".load-more-data[data-key]")
                             .get("data-key")
-                        )
-                    except AttributeError:
-                        break
+                    )
+                except AttributeError:
+                    load_another_reviews = False
 
-                    link_url = LINK_URL_TEMPLATE.format(id_)
-                    request_params['params']['paginationKey'] = pagination_key
-                    res = send_request(link_url, **request_params)
+                link_url = LINK_URL_TEMPLATE.format(id_)
+                request_params['params']['paginationKey'] = pagination_key
+                res = send_request(link_url, **request_params)
+
+                title_reviews.extend(reviews_batch)
+                self._logger.info(
+                    f'Collected {len(reviews_batch)} reviews'
+                    f' for title ID {id_}'
+                )
+
+                wait(self._min_delay, self._max_delay)
+
+        self._logger.info(
+            f'Total collected {len(title_reviews)} reviews for title ID {id_}'
+        )
+        return title_reviews
 
     def collect(self) -> None:
-        test_id = '/title/tt0238883/'
+        print('Collecting reviews...')
+        for genre in self._genres:
+            genre_path = get_full_path(self._id_dir, f'{genre}.pkl')
+            genre_id = load_obj(genre_path)
+            genre_reviews = []
+            for title_id in genre_id:
+                
+
+        # test_id = '/title/tt0118767/'
+        # test_reviews = self.collect_title_reviews(test_id)
+        # filepath = get_full_path(self._save_dir, 'test.pkl')
+        # dump_obj(test_reviews, filepath)
 
 # def extract_text(tag: BeautifulSoup):
 #     text_raw = tag.find('div', {'class': 'text show-more__control'})

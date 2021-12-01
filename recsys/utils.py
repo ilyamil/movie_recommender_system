@@ -15,6 +15,9 @@ from tenacity import (retry, wait_random,
 
 DIR_PATH = os.path.dirname(__file__)
 ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, '..'))
+RETRY_ATTEMPTS = 5
+RETRY_MIN_DELAY = 1
+RETRY_MAX_DELAY = 2
 
 
 def wait(min_time: int, max_time: int = None) -> None:
@@ -29,9 +32,11 @@ def wait(min_time: int, max_time: int = None) -> None:
     time.sleep(sleep_for)
 
 
-def get_full_path(dirname: str, filename: str) -> str:
+def get_full_path(dirname: str, filename: str = None) -> str:
     dirname_tokens = os.path.split(dirname)
-    return os.path.join(ROOT_PATH, *dirname_tokens, filename)
+    if filename:
+        return os.path.join(ROOT_PATH, *dirname_tokens, filename)
+    return os.path.join(ROOT_PATH, *dirname_tokens)
 
 
 def dump_obj(obj: Any, path: str, mode: str = 'wb') -> None:
@@ -88,7 +93,8 @@ def create_logger(cfg: Dict[str, Any], write_file: str) -> logging.Logger:
 @retry(
     retry=retry_if_exception_type((requests.ConnectionError,
                                    requests.Timeout)),
-    stop=stop_after_attempt(10), wait=wait_random(1, 2)
+    stop=stop_after_attempt(RETRY_ATTEMPTS),
+    wait=wait_random(RETRY_MIN_DELAY, RETRY_MAX_DELAY)
 )
 def send_request(url: str, session: requests.Session = None,
                  **request_params) -> requests.Response:

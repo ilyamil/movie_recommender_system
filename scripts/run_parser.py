@@ -1,7 +1,7 @@
 import argparse
 from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
-# from recsys.imdb_parser.reviews import ReviewsCollector
+from recsys.imdb_parser.reviews import ReviewCollector
 # from recsys.imdb_parser.details import DetailsCollector
 # from recsys.imdb_parser.other_reviews import OtherReviewsCollector
 
@@ -9,8 +9,8 @@ from recsys.imdb_parser.identifiers import IDCollector
 ATTRIBUTES = [
     'id',
     'details',
-    'movie_reviews',
-    'user_movie_reviews'
+    'reviews',
+    'user_reviews'
 ]
 CONFIG_FILE = 'config.yaml'
 
@@ -31,16 +31,15 @@ def run_parser(args, config):
     if args.attribute == 'id':
         collector = IDCollector(config['id'], config['logger'])
         collector.collect()
+    elif args.attribute == 'reviews':
+        collector = ReviewCollector(config['reviews'], config['logger'])
+        collector.collect()
     elif args.attribute == 'details':
         # collector = DetailsCollector()
         # collector.collect_details()
         print(2)
-    elif args.attribute == 'movie_reviews':
-        # collector = ReviewsCollector()
-        # collector.collect_reviews()
-        print(3)
-    elif args.attribute == 'user_movie_reviews':
-        # collector = OtherReviewsCollector()
+    elif args.attribute == 'user_reviews':
+        # collector = UserReviewsCollector()
         # collector.collect_other_reviews()
         print(4)
     else:

@@ -23,7 +23,6 @@ MOVIE_COUNT_BY_GENRE = {
     'mystery': 17137,
     'romance': 48572,
     'sci-fi': 15326,
-    'short': 1063288,
     'sport': 4824,
     'thriller': 49018,
     'war': 9499,
@@ -78,7 +77,7 @@ class IDCollector:
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
         self._genres = collector_config['genres']
-        
+
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
         self._genres = [genre.lower() for genre in self._genres]
@@ -174,7 +173,7 @@ class IDCollector:
         Parses relevant web pages to extract movie identifiers and write
         them on a disk.
         """
-        print('Collection of identifiers...')
+        print('Collecting identifiers...')
         for genre in self._genres:
             genre_id = self._collect_genre_id(genre)
 
