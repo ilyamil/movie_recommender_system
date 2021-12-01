@@ -13,13 +13,11 @@ REVIEW_ID = '/title/tt0068646/'
 @pytest.fixture
 def review():
     review_soup = BeautifulSoup(load_obj(REVIEW_TAG_PATH), 'lxml')
-    rc = ReviewCollector()
-    return rc.collect_review(REVIEW_ID, review_soup)
+    return ReviewCollector.collect_review(REVIEW_ID, review_soup)
 
 
-def test_rc_init():
-    rc = ReviewCollector()
-    assert bool(rc)
+def test_rc_review_parsing(review):
+    assert bool(review)
 
 
 def test_rc_collect_all_review_attributes(review):
