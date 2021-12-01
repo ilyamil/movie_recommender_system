@@ -77,10 +77,12 @@ class IDCollector:
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
         self._genres = collector_config['genres']
+        n_titles = collector_config['n_titles']
+        pct_titles = collector_config['pct_titles']
 
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
-        self._genres = [genre.lower() for genre in self._genres]
+
         if 'all' not in self._genres:
             use_genres = set(self._genres).intersection(GENRES)
             genre_diff = set(self._genres) - set(use_genres)
@@ -89,26 +91,18 @@ class IDCollector:
                     f'No {", ".join(genre_diff)} in possible genres'
                 )
             if not use_genres:
-                no_genre_msg = 'No valid genres were passed'
-                self._logger.error(no_genre_msg)
-                raise ValueError(no_genre_msg)
+                raise ValueError('No valid genres were passed')
             self._genres = use_genres
         else:
             self._genres = GENRES
 
-        n_titles = collector_config['n_titles']
-        pct_titles = collector_config['pct_titles']
-        if pct_titles == 'None':
-            pct_titles = None
-        if n_titles == 'None':
-            n_titles = None
         if not (n_titles or pct_titles):
             raise ValueError(
                 'Only one of these arguments needs to be set'
                 ' in config file: n_titles or pct_titles'
             )
         if pct_titles:
-            if not 0 < pct_titles < 100:
+            if not 0 <= pct_titles <= 100:
                 raise ValueError(
                     'pct_titles must lie in the interval [0, 100]'
                 )

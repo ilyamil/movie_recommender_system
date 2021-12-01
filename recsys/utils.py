@@ -6,7 +6,6 @@ import yaml
 import logging
 import csv
 import requests
-from pathlib import Path
 from typing import Dict, Any, Iterable
 from tenacity import (retry, wait_random,
                       stop_after_attempt,

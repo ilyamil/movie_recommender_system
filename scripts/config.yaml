@@ -10,7 +10,7 @@ data_collection:
     log_file: 'identifiers.log'
     genres: 'all'
     n_titles: 50
-    pct_titles: None
+    pct_titles: null
     request_delay:
       min_delay: 0.2
       max_delay: 0.5
@@ -20,6 +20,8 @@ data_collection:
     id_dir: 'data/raw/identifiers/1pct/'
     log_file: 'reviews.log'
     genres: 'all'
+    n_reviews: null
+    pct_reviews: 10
     request_delay:
       min_delay: 0.1
       max_delay: 0.2
