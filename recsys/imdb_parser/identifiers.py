@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from recsys.utils import (dump_obj, get_full_path,
                           wait, send_request, create_logger)
 
+
+BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
+# total number of movies collected manually as of December 2021
 MOVIE_COUNT_BY_GENRE = {
     'action': 49210,
     'adventure': 24075,
@@ -11,7 +14,6 @@ MOVIE_COUNT_BY_GENRE = {
     'biography': 7519,
     'comedy': 98571,
     'crime': 33263,
-    'documentary': 809072,
     'drama': 209137,
     'family': 15800,
     'fantasy': 15831,
@@ -153,7 +155,8 @@ class IDCollector:
         tqdm_params = {
             'iterable': range(1, self._sample_size[genre] + 1, STEP),
             'desc': genre,
-            'unit_scale': STEP
+            'unit_scale': STEP,
+            'bar_format': BAR_FORMAT
         }
         for rank in tqdm(**tqdm_params):
             genre_id += self._collect_rank_id(genre, rank)

@@ -1,4 +1,5 @@
 .vscode/
+/data
 pytest_cache/
 recsys.egg-info/
 *pycache*

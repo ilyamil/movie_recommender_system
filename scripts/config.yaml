@@ -9,11 +9,11 @@ data_collection:
     dir: 'data/raw/identifiers/1pct'
     log_file: 'identifiers.log'
     genres: 'all'
-    n_titles: 50
-    pct_titles: null
+    n_titles: null
+    pct_titles: 1
     request_delay:
       min_delay: 0.2
-      max_delay: 0.5
+      max_delay: 0.3
 
   reviews:
     dir: 'data/raw/reviews/1pct/'
