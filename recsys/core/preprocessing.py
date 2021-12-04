@@ -5,6 +5,7 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Split 'helpfulness' column of input dataframe into two
     distinct columns: 'upvotes' and 'total_votes'.
+    After transformation 'helpfulness' column is removed.
 
     Args:
         df_raw (pd.DataFrame): input data with column.
@@ -19,5 +20,6 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         .str.extractall('(\d+)')
         .unstack('match')
         .values
+        .astype(int)
     )
     return df_.drop(columns=['helpfulness'])
