@@ -90,7 +90,7 @@ class ReviewCollector:
             return None
 
     @staticmethod
-    def collect_rating(tag: Tag) -> Optional[int]:
+    def collect_rating(tag: Tag) -> Optional[float]:
         try:
             rating_raw = tag.find_all('span')
             rating = rating_raw[1].text

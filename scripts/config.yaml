@@ -16,10 +16,21 @@ data_collection:
       max_delay: 0.3
 
   reviews:
-    dir: 'data/raw/reviews/1pct/'
+    dir: 'data/raw/reviews/1pct_10pct/'
     id_dir: 'data/raw/identifiers/1pct/'
     log_file: 'reviews.log'
-    genres: 'all'
+    genres:
+      - film-noir
+      - history
+      - horror
+      - music
+      - mystery
+      - romance
+      - sci-fi
+      - sport
+      - thriller
+      - war
+      - western
     n_reviews: null
     pct_reviews: 10
     request_delay:
