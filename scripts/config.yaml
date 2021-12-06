@@ -19,18 +19,7 @@ data_collection:
     dir: 'data/raw/reviews/1pct_10pct/'
     id_dir: 'data/raw/identifiers/1pct/'
     log_file: 'reviews.log'
-    genres:
-      - film-noir
-      - history
-      - horror
-      - music
-      - mystery
-      - romance
-      - sci-fi
-      - sport
-      - thriller
-      - war
-      - western
+    genres: 'all'
     n_reviews: null
     pct_reviews: 10
     request_delay:
@@ -38,12 +27,12 @@ data_collection:
       max_delay: 0.2
 
   details:
-    dir: 'data/raw/details/'
-    id_dir: 'data/raw/identifiers/'
+    dir: 'data/raw/details/1pct'
+    id_dir: 'data/raw/identifiers/1pct'
+    log_file: 'details.log'
     request_delay:
       min_delay: 1
       max_delay: 2
-    log_dir: 'details.log'
 
   user_reviews:
     dir: 'data/raw/other_reviews'
