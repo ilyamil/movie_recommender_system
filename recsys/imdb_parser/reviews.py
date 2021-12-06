@@ -81,68 +81,18 @@ class ReviewCollector:
                     'pct_reviews must lie in the interval [0, 100]'
             )
 
-    @staticmethod
-    def collect_text(tag: Tag) -> Optional[str]:
-        try:
-            text_raw = tag.find('div', {'class': 'text show-more__control'})
-            return text_raw.text
-        except Exception:
-            return None
-
-    @staticmethod
-    def collect_rating(tag: Tag) -> Optional[float]:
-        try:
-            rating_raw = tag.find_all('span')
-            rating = rating_raw[1].text
-            # If no rating was given, span block containes review date
-            if len(rating) > 2:
-                return None
-            return int(rating)
-        except Exception:
-            return None
-
-    @staticmethod
-    def collect_date(tag: Tag) -> Optional[str]:
-        try:
-            date_raw = tag.find('span', {'class': 'review-date'})
-            return date_raw.text
-        except Exception:
-            return None
-
-    @staticmethod
-    def collect_title(tag: Tag) -> Optional[str]:
-        try:
-            title_raw = tag.find('a', {'class': 'title'})
-            return title_raw.text
-        except Exception:
-            return None
-
-    @staticmethod
-    def collect_author(tag: Tag) -> Optional[str]:
-        try:
-            author_raw = tag.find('span', {'class': 'display-name-link'})
-            return author_raw.a['href']
-        except Exception:
-            return None
-
-    @staticmethod
-    def collect_helpfulness(tag: Tag) -> Optional[str]:
-        try:
-            helpfulness_raw = tag.find('div', {'class': 'actions text-muted'})
-            return helpfulness_raw.text
-        except Exception:
-            return None
+        self._logger.info('Successfully initialized ReviewCollector')
 
     @staticmethod
     def collect_review(id_: str, tag: Tag) -> Dict[str, Any]:
         return {
             'id': id_,
-            'text': ReviewCollector.collect_text(tag),
-            'rating': ReviewCollector.collect_rating(tag),
-            'date': ReviewCollector.collect_date(tag),
-            'title': ReviewCollector.collect_title(tag),
-            'author': ReviewCollector.collect_author(tag),
-            'helpfulness': ReviewCollector.collect_helpfulness(tag)
+            'text': collect_text(tag),
+            'rating': collect_rating(tag),
+            'date': collect_date(tag),
+            'title': collect_title(tag),
+            'author': collect_author(tag),
+            'helpfulness': collect_helpfulness(tag)
         }
 
     @staticmethod
@@ -246,3 +196,60 @@ class ReviewCollector:
                 f'Total collected {len(genre_reviews)} reviews'
                 f' in genre {genre.upper()}'
             )
+
+
+def collect_date(tag: Tag) -> Optional[str]:
+    filters = {'class': 'review-date'}
+    try:
+        date_raw = tag.find('span', filters)
+        return date_raw.text
+    except Exception:
+        return None
+
+
+def collect_title(tag: Tag) -> Optional[str]:
+    filters = {'class': 'title'}
+    try:
+        title_raw = tag.find('a', filters)
+        return title_raw.text
+    except Exception:
+        return None
+
+
+def collect_text(tag: Tag) -> Optional[str]:
+    filters = {'class': 'text show-more__control'}
+    try:
+        text_raw = tag.find('div', filters)
+        return text_raw.text
+    except Exception:
+        return None
+
+
+def collect_rating(tag: Tag) -> Optional[float]:
+    try:
+        rating_raw = tag.find_all('span')
+        rating = rating_raw[1].text
+        # If no rating was given, span block containes review date
+        if len(rating) > 2:
+            return None
+        return int(rating)
+    except Exception:
+        return None
+
+
+def collect_author(tag: Tag) -> Optional[str]:
+    filters = {'class': 'display-name-link'}
+    try:
+        author_raw = tag.find('span', filters)
+        return author_raw.a['href']
+    except Exception:
+        return None
+
+
+def collect_helpfulness(tag: Tag) -> Optional[str]:
+    filters = {'class': 'actions text-muted'}
+    try:
+        helpfulness_raw = tag.find('div', filters)
+        return helpfulness_raw.text
+    except Exception:
+        return None

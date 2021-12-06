@@ -118,6 +118,8 @@ class IDCollector:
                 for genre in self._genres
             }
 
+        self._logger.info('Successfully initialized IDCollector')
+
     @staticmethod
     def collect_movie_id(page_content: bytes) -> List[str]:
         page_html = BeautifulSoup(page_content, 'html.parser')

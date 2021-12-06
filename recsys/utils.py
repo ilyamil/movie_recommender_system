@@ -80,12 +80,13 @@ def parse_config(path: str, *sections: str) -> Dict[str, Any]:
 
 
 def create_logger(cfg: Dict[str, Any], write_file: str) -> logging.Logger:
-    logging.basicConfig(
-        filename=get_full_path(cfg['dir'], write_file),
-        format=cfg['msg_format'],
-        datefmt=cfg['dt_format'],
-        level=cfg['level']
-    )
+    logger_params = {
+        'filename': get_full_path(cfg['dir'], write_file),
+        'format': cfg['msg_format'],
+        'datefmt': cfg['dt_format'],
+        'level': cfg['level']
+    }
+    logging.basicConfig(**logger_params)
     return logging.getLogger('')
 
 

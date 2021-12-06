@@ -27,9 +27,10 @@ data_collection:
       max_delay: 0.2
 
   details:
-    dir: 'data/raw/details/1pct'
-    id_dir: 'data/raw/identifiers/1pct'
+    dir: 'data/raw/details/1pct/'
+    id_dir: 'data/raw/identifiers/1pct/'
     log_file: 'details.log'
+    genres: 'all'
     request_delay:
       min_delay: 1
       max_delay: 2
