@@ -1,3 +1,9 @@
+logger:
+  level: 'INFO'
+  dir: 'logs' 
+  msg_format: '%(asctime)s %(levelname)s %(message)s'
+  dt_format: '%Y-%m-%d %H:%M:%S'
+
 data_collection:
   logger:
     level: 'INFO'
@@ -42,12 +48,20 @@ data_collection:
       max_delay: 2
     log_dir: 'other_reviews.log'
 
-model_training:
+training:
   batch_size: 100
   batch_num: 2
 
-model_inference:
-  delay: None
+inference:
+  model: 'recsys.models.thegodfather_model.TheGodfatherModel'
+  model_params: null
+  preprocessor: 'recsys.core.data.IdentityDataTransformer'
+  preprocessor_params: null
+  postprocessor: 'recsys.core.data.IdentityDataTransformer'
+  postprocessor_params: null
+  metadata_loader: null
+  metadata_path: null
+  log_file: 'app/inference.log' 
 
 application:
   model_name: default

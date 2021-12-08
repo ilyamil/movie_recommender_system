@@ -81,6 +81,13 @@ class DetailsCollector:
             )
 
 
+def collect_simple_entity(soup: BeautifulSoup, entity_config) -> Optional[str]:
+    try:
+        return soup.find(entity_config.tag_name, entity_config.filters).text
+    except Exception:
+        return None
+
+
 def collect_original_title(soup: BeautifulSoup) -> Optional[str]:
     filters = {'data-testid': 'hero-title-block__original-title'}
     try:
@@ -205,22 +212,12 @@ def collect_certificate(soup: BeautifulSoup) -> Optional[str]:
         return None
 
 
-def collect_details_summary(soup: BeautifulSoup) -> Dict[str, str]:
-    details_sections = [
-        'Release date',
-        'Country of origin',
-        'Official site',
-        'Languages',
-        'Also known as',
-        'Filming locations',
-        'Production companies'
-    ]
+def collect_details_summary(soup: BeautifulSoup) -> Optional[str]:
     filters = {'data-testid': 'title-details-section'}
     try:
-        details = soup.find('div', filters).text
-        return extract_substrings_after_anchors(details, details_sections)
+        return soup.find('div', filters).text
     except Exception:
-        return dict.fromkeys(details_sections)
+        return None
 
 
 def collect_boxoffice(soup: BeautifulSoup) -> Optional[str]:
@@ -237,26 +234,3 @@ def collect_techspecs(soup: BeautifulSoup) -> Optional[str]:
         return soup.find('div', filters).text
     except Exception:
         return None
-
-
-def extract_substrings_after_anchors(s: str, anchors: List[str])\
-        -> Optional[Dict[str, str]]:
-    details = {}
-    empty_anchors = []
-    use_anchors = []
-    for anchor in anchors:
-        if anchor not in s:
-            empty_anchors.append(anchor)
-        else:
-            use_anchors.append(anchor)
-    for section_num in range(len(use_anchors)):
-        start = use_anchors[section_num]
-        left_loc = s.find(start)
-        if section_num != len(use_anchors) - 1:
-            end = use_anchors[section_num + 1]
-            right_loc = s.rfind(end)
-            details[start] = s[left_loc + len(start): right_loc]
-        else:
-            details[start] = s[left_loc + len(start):]
-    details.update(**dict.fromkeys(empty_anchors))
-    return details

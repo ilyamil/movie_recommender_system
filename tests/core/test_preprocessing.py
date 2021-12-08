@@ -38,3 +38,32 @@ def test_convert_to_date(reviews):
     assert 'review_date' in df_.columns
     assert 'date' not in df_.columns
     assert df_.loc[0, 'review_date'] == datetime(2020, 1, 31).date()
+
+
+def test_extract_substrings_after_anchors_right_number_of_anchors():
+    s = 'anchor1 some string anchor2 another string'
+    anchors = ['anchor1', 'anchor2']
+    substrings = preprocessing.extract_substrings_after_anchors(
+        s, anchors
+    )
+    assert all(anchor in substrings.keys() for anchor in anchors)
+
+
+def test_extract_substrings_after_anchors_greater_number_of_anchors():
+    s = 'anchor1 some string anchor2 another string'
+    anchors = ['anchor1', 'anchor2', 'anchor3']
+    substrings = preprocessing.extract_substrings_after_anchors(
+        s, anchors
+    )
+    assert all(anchor in substrings.keys() for anchor in anchors)
+    assert substrings['anchor3'] is None
+
+
+def test_extract_substrings_after_anchors_no_anchors_in_string():
+    s = 'some string another string'
+    anchors = ['anchor1', 'anchor2', 'anchor3']
+    substrings = preprocessing.extract_substrings_after_anchors(
+        s, anchors
+    )
+    assert all(anchor in substrings.keys() for anchor in anchors)
+    assert all(substrings[anchor] is None for anchor in anchors)
