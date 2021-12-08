@@ -34,7 +34,7 @@ class RequestHandler:
         else:
             postprocessor_configured = postprocessor()
 
-        self._configured_model = Model(model_configured,
+        self._model_configured = Model(model_configured,
                                        preprocessor_configured,
                                        postprocessor_configured)
         # self._metadata_loader = model_cfg['metadata_loader']
@@ -48,4 +48,4 @@ class RequestHandler:
         )
 
     def handle_request(self, request):
-        pass
+        return self._model_configured.recommend(request)
