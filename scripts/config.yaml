@@ -5,15 +5,9 @@ logger:
   dt_format: '%Y-%m-%d %H:%M:%S'
 
 data_collection:
-  logger:
-    level: 'INFO'
-    dir: 'logs/data_collection' 
-    msg_format: '%(asctime)s %(levelname)s %(message)s'
-    dt_format: '%Y-%m-%d %H:%M:%S'
-
   id:
     dir: 'data/raw/identifiers/1pct'
-    log_file: 'identifiers.log'
+    log_file: 'data_collection/identifiers.log'
     genres: 'all'
     n_titles: null
     pct_titles: 1
@@ -24,7 +18,7 @@ data_collection:
   reviews:
     dir: 'data/raw/reviews/1pct_10pct/'
     id_dir: 'data/raw/identifiers/1pct/'
-    log_file: 'reviews.log'
+    log_file: 'data_collection/reviews.log'
     genres: 'all'
     n_reviews: null
     pct_reviews: 10
@@ -35,7 +29,8 @@ data_collection:
   details:
     dir: 'data/raw/details/1pct/'
     id_dir: 'data/raw/identifiers/1pct/'
-    log_file: 'details.log'
+    poster_dir: 'data/raw/details/1pct/posters/'
+    log_file: 'data_collection/details.log'
     genres: 'all'
     request_delay:
       min_delay: 1
@@ -43,10 +38,11 @@ data_collection:
 
   user_reviews:
     dir: 'data/raw/other_reviews'
+    id_dir: 'data/raw/identifiers/1pct'
+    log_file: 'data_collection/user_reviews.log'
     request_delay:
       min_delay: 1
       max_delay: 2
-    log_dir: 'other_reviews.log'
 
 training:
   batch_size: 100

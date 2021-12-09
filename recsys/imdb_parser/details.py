@@ -19,6 +19,7 @@ class DetailsCollector:
         self._logger = create_logger(logger_config, log_file)
         self._save_dir = collector_config['dir']
         self._id_dir = collector_config['id_dir']
+        self._poster_dir = collector_config['poster_dir']
         self._genres = collector_config['genres']
         self._min_delay = collector_config['request_delay']['min_delay']
         self._max_delay = collector_config['request_delay']['max_delay']
@@ -66,11 +67,13 @@ class DetailsCollector:
         print('Collecting details...')
         for genre in self._genres:
             genre_details = []
-            genre_id_path = get_full_path(self._id_dir, f'{genre}.pkl')
-            genre_id = load_obj(genre_id_path)
+            posters = []
+            genre_id = load_obj(get_full_path(self._id_dir, f'{genre}.pkl'))
             for title_id in tqdm(genre_id, desc=genre, bar_format=BAR_FORMAT):
-                title_details = self.collect_title_reviews(title_id)
-                genre_details.extend(title_details)
+                details = self.collect_title_details(title_id)
+                poster = details['poster']
+                del details['poster']
+                genre_details.append(title_details)
 
             save_path = get_full_path(self._save_dir, f'{genre}.csv')
             write_csv(genre_details, save_path)

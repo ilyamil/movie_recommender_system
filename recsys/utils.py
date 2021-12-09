@@ -1,4 +1,5 @@
 import os
+import io
 import time
 import random
 import dill
@@ -6,10 +7,11 @@ import yaml
 import logging
 import csv
 import requests
-from typing import Dict, Any, Iterable
+from typing import Dict, Any, Iterable, List
 from tenacity import (retry, wait_random,
                       stop_after_attempt,
                       retry_if_exception_type)
+from PIL import Image
 
 
 DIR_PATH = os.path.dirname(__file__)
@@ -65,9 +67,16 @@ def write_csv(data: Iterable[Dict[str, Any]], path: str,
         writer.writerows(data)
 
 
-def read_csv(path, encoding: str = 'utf8'):
+def read_csv(path, encoding: str = 'utf8') -> List[Dict[str, Any]]:
     with open(path, 'r', newline='', encoding=encoding) as file:
         return list(csv.DictReader(file))
+
+
+def write_bytest_to_image(img_bytes: bytes, path: str,
+                          fmt: str = 'jpeg') -> None:
+    img_stream = io.BytesIO(img_bytes)
+    img = Image.open(img_stream)
+    img.save(path, fmt)
 
 
 def parse_config(path: str, *sections: str) -> Dict[str, Any]:
