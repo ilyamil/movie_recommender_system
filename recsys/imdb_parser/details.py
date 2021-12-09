@@ -4,7 +4,8 @@ from typing import Optional, Dict, List, Any
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from recsys.utils import (send_request, create_logger,
-                          write_csv, load_obj, get_full_path)
+                          write_csv, load_obj, get_full_path,
+                          write_bytest_to_image, wait)
 
 
 BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
@@ -27,9 +28,10 @@ class DetailsCollector:
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
 
+        id_path = get_full_path(self._id_dir)
         available_genres = [
             genre.split('.')[0]
-            for genre in os.listdir(get_full_path(self._id_dir))
+            for genre in os.listdir(id_path)
         ]
         if 'all' not in self._genres:
             use_genres = set(self._genres).intersection(available_genres)
@@ -67,13 +69,34 @@ class DetailsCollector:
         print('Collecting details...')
         for genre in self._genres:
             genre_details = []
-            posters = []
-            genre_id = load_obj(get_full_path(self._id_dir, f'{genre}.pkl'))
-            for title_id in tqdm(genre_id, desc=genre, bar_format=BAR_FORMAT):
-                details = self.collect_title_details(title_id)
-                poster = details['poster']
+            genre_path = get_full_path(self._id_dir, f'{genre}.pkl')
+            tqdm_params = {
+                'iterable': load_obj(genre_path),
+                'desc': genre,
+                'bar_format': BAR_FORMAT
+            }
+            for title_id in tqdm(**tqdm_params):
+                response = send_request(BASE_URL.format(title_id))
+                soup = BeautifulSoup(response.text, 'lxml')
+                details = self.collect_title_details(soup)
+                details['title_id'] = title_id
+                try:
+                    poster = details['poster']
+                    poster_name = f'{title_id.split("/")[-2]}.jpeg'
+                    poster_path = get_full_path(
+                        self._poster_dir, poster_name
+                    )
+                    write_bytest_to_image(poster, poster_path)
+                except Exception as e:
+                    self._logger.warn(
+                        f'Exception in saving poster for title {title_id}'
+                        f' with message: {e}'
+                    )
+
                 del details['poster']
-                genre_details.append(title_details)
+                genre_details.append(details)
+
+                wait(self._min_delay, self._max_delay)
 
             save_path = get_full_path(self._save_dir, f'{genre}.csv')
             write_csv(genre_details, save_path)
@@ -82,13 +105,6 @@ class DetailsCollector:
                 f'Total collected {len(genre_details)} reviews'
                 f' in genre {genre.upper()}'
             )
-
-
-def collect_simple_entity(soup: BeautifulSoup, entity_config) -> Optional[str]:
-    try:
-        return soup.find(entity_config.tag_name, entity_config.filters).text
-    except Exception:
-        return None
 
 
 def collect_original_title(soup: BeautifulSoup) -> Optional[str]:

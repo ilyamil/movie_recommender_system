@@ -1,4 +1,4 @@
-import argparse
+from argparse import ArgumentParser
 from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
 from recsys.imdb_parser.reviews import ReviewCollector
@@ -14,30 +14,37 @@ ATTRIBUTES = [
 ]
 CONFIG_FILE = 'config.yaml'
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-a', '--attribute', type=str,
-                    help=(
-                        f"""
-                        Movie`s attribute to collect.
-                        Possible attribues: {", ".join(ATTRIBUTES)}.
-                        """
-                        )
-                    )
-args = parser.parse_args()
-config = parse_config(CONFIG_FILE, 'data_collection')
+
+def parse_arguments():
+    parser = ArgumentParser()
+    parser.add_argument(
+        '-a', '--attribute', type=str,
+        help=(
+            f"""
+            Movie`s attribute to collect.
+            Possible attribues: {", ".join(ATTRIBUTES)}.
+            """
+            )
+        )
+    return parser.parse_args()
 
 
-def run_parser(args, config):
-    if args.attribute == 'id':
-        collector = IDCollector(config['id'], config['logger'])
+def main():
+    arguments = parse_arguments()
+    config = parse_config(CONFIG_FILE)
+    if arguments.attribute == 'id':
+        collector = IDCollector(config['data_collection']['id'],
+                                config['logger'])
         collector.collect()
-    elif args.attribute == 'reviews':
-        collector = ReviewCollector(config['reviews'], config['logger'])
+    elif arguments.attribute == 'reviews':
+        collector = ReviewCollector(config['data_collection']['reviews'],
+                                    config['logger'])
         collector.collect()
-    elif args.attribute == 'details':
-        collector = DetailsCollector(config['details'], config['logger'])
-        # collector.collect()
-    elif args.attribute == 'user_reviews':
+    elif arguments.attribute == 'details':
+        collector = DetailsCollector(config['data_collection']['details'],
+                                     config['logger'])
+        collector.collect()
+    elif arguments.attribute == 'user_reviews':
         # collector = UserReviewsCollector()
         # collector.collect_other_reviews()
         print(4)
@@ -48,4 +55,4 @@ def run_parser(args, config):
 
 
 if __name__ == '__main__':
-    run_parser(args, config)
+    main()

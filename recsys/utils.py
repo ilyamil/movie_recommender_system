@@ -74,6 +74,8 @@ def read_csv(path, encoding: str = 'utf8') -> List[Dict[str, Any]]:
 
 def write_bytest_to_image(img_bytes: bytes, path: str,
                           fmt: str = 'jpeg') -> None:
+    if not os.path.exists(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     img_stream = io.BytesIO(img_bytes)
     img = Image.open(img_stream)
     img.save(path, fmt)
