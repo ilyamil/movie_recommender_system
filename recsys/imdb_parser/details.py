@@ -76,27 +76,34 @@ class DetailsCollector:
                 'bar_format': BAR_FORMAT
             }
             for title_id in tqdm(**tqdm_params):
-                response = send_request(BASE_URL.format(title_id))
-                soup = BeautifulSoup(response.text, 'lxml')
-                details = self.collect_title_details(soup)
-                details['title_id'] = title_id
+                title_url = BASE_URL.format(title_id)
                 try:
-                    poster = details['poster']
-                    poster_name = f'{title_id.split("/")[-2]}.jpeg'
-                    poster_path = get_full_path(
-                        self._poster_dir, poster_name
-                    )
-                    write_bytest_to_image(poster, poster_path)
-                except Exception as e:
+                    response = send_request(title_url)
+                    soup = BeautifulSoup(response.text, 'lxml')
+                    details = self.collect_title_details(soup)
+                    details['title_id'] = title_id
+                    # saving poster on disk
+                    try:
+                        poster = details['poster']
+                        poster_name = f'{title_id.split("/")[-2]}.jpeg'
+                        poster_path = get_full_path(
+                            self._poster_dir, poster_name
+                        )
+                        write_bytest_to_image(poster, poster_path)
+                    except Exception as e:
+                        self._logger.warn(
+                            f'Exception in saving poster for title {title_id}'
+                            f' with message: {e}'
+                        )
+
+                    del details['poster']
+                    genre_details.append(details)
+
+                    wait(self._min_delay, self._max_delay)
+                except Exception:
                     self._logger.warn(
-                        f'Exception in saving poster for title {title_id}'
-                        f' with message: {e}'
+                        f'Exception in parsing {title_url}'
                     )
-
-                del details['poster']
-                genre_details.append(details)
-
-                wait(self._min_delay, self._max_delay)
 
             save_path = get_full_path(self._save_dir, f'{genre}.csv')
             write_csv(genre_details, save_path)

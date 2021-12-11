@@ -14,3 +14,26 @@
 2021-12-09 22:32:02 INFO Total collected 350 reviews in genre CRIME
 2021-12-09 23:04:52 INFO Successfully initialized DetailsCollector
 2021-12-09 23:15:46 INFO Total collected 100 reviews in genre BIOGRAPHY
+2021-12-10 09:34:03 INFO Successfully initialized DetailsCollector
+2021-12-10 10:29:01 INFO Total collected 1000 reviews in genre COMEDY
+2021-12-10 10:34:27 INFO Total collected 100 reviews in genre ANIMATION
+2021-12-10 10:47:45 INFO Total collected 250 reviews in genre ADVENTURE
+2021-12-10 11:01:11 INFO Successfully initialized DetailsCollector
+2021-12-10 11:06:37 INFO Total collected 100 reviews in genre WESTERN
+2021-12-10 11:34:09 INFO Total collected 500 reviews in genre THRILLER
+2021-12-10 11:52:29 INFO Total collected 350 reviews in genre HORROR
+2021-12-10 12:18:29 INFO Total collected 500 reviews in genre ROMANCE
+2021-12-10 12:29:00 INFO Total collected 200 reviews in genre MYSTERY
+2021-12-10 12:33:56 INFO Total collected 100 reviews in genre WAR
+2021-12-10 13:29:19 WARNING Exception in saving poster for title /title/tt0490204/ with message: cannot identify image file <_io.BytesIO object at 0x000001C87D5A6BD0>
+2021-12-10 13:43:01 INFO Successfully initialized DetailsCollector
+2021-12-10 14:41:41 INFO Total collected 1060 reviews in genre DRAMA
+2021-12-10 14:56:10 INFO Successfully initialized DetailsCollector
+2021-12-10 15:07:19 INFO Total collected 200 reviews in genre FAMILY
+2021-12-10 15:17:26 INFO Total collected 200 reviews in genre FANTASY
+2021-12-10 15:22:50 INFO Total collected 100 reviews in genre MUSIC
+2021-12-10 15:25:33 INFO Total collected 50 reviews in genre FILM-NOIR
+2021-12-10 15:33:33 INFO Total collected 150 reviews in genre MUSICAL
+2021-12-10 15:37:31 INFO Total collected 50 reviews in genre SPORT
+2021-12-10 15:43:21 INFO Total collected 100 reviews in genre HISTORY
+2021-12-10 15:54:01 INFO Total collected 200 reviews in genre SCI-FI

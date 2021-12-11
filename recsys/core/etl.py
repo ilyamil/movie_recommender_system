@@ -1,3 +1,4 @@
+import ast
 from typing import Optional, Dict, List
 import pandas as pd
 import numpy as np
@@ -38,7 +39,10 @@ def convert_to_date(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_.drop(columns=['date'])
 
 
-def expand_short_form(string_num: str) -> int:
+def expand_short_form(string_num: str) -> Optional[float]:
+    if string_num is None:
+        return None
+
     short_forms = {
         'K': 1_000,
         'M': 1_000_000,
@@ -73,6 +77,71 @@ def split_aggregate_rating_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         .drop('agg_rating', axis=1)
     )
 
+
+def extract_original_title(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Extract title from 'original_title' column by splitting it.
+    """
+    if 'original_title' not in df_raw.columns:
+        raise ValueError('No "original_title" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['original_title'] = (
+        df_['original_title']
+        .str.split('Original title: ',
+                   expand=True)
+        .iloc[:, 1]
+    )
+    return df_
+
+
+def split_review_summary(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Split column 'review_summary' into 3 columns: 'user_reviews_number',
+    'critic_reviews_number', 'metascore'.
+    After transformation the 'review_summary' columns is removed.
+    """
+    if 'review_summary' not in df_raw.columns:
+        raise ValueError('No "review_summary" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    columns = [
+        'user_reviews_num',
+        'critic_reviews_num',
+        'metascore'
+    ]
+    separator = 'User reviews|Critic reviews|Metascore'
+    # convert string to pyhton dict in each row
+    df_[columns] = pd.json_normalize(
+        df_['review_summary']
+        .apply(ast.literal_eval)
+    )
+    # get numbers associated with entities in 'columns'
+    df_[columns] = (
+        df_[columns]
+        .apply(lambda x: x.str.split(separator))
+        .apply(lambda x: x.str.get(0))
+    )
+    for col in columns:
+        df_[col] = df_[col].apply(expand_short_form)
+
+    return df_.drop('review_summary', axis=1)
+
+    # df_['user_reviews_num'] = (
+    #     df_['user_reviews_num']
+    #     .str.split('User reviews', expand=True)
+    #     .iloc[:, 0]
+    # )
+    # df_['critic_reviews_num'] = (
+    #     df_['critic_reviews_num']
+    #     .str.split('Critic reviews', expand=True)
+    #     .iloc[:, 0]
+    # )
+    # df_['metascore'] = (
+    #     df_['metascore']
+    #     .str.split('Metascore', expand=True)
+    #     .iloc[:, 0]
+    # )
 
 details_sections = [
         'Release date',

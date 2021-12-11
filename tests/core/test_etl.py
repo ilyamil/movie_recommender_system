@@ -26,7 +26,11 @@ def movie_details():
     data = [
         {
             'title_id': 1,
-            'agg_rating': '8.9/1099M'
+            'agg_rating': '8.9/1099M',
+            'original_title': 'Original title: The Dark Knight',
+            'review_summary': ("{'n_user_reviews': '7.7KUser reviews',"
+                               " 'n_critic_reviews': '433Critic reviews',"
+                               " 'metascore': '84Metascore'}")
         }
     ]
     return pd.DataFrame(data)
@@ -88,3 +92,20 @@ def test_split_aggregate_rating_col(movie_details):
     assert 'agg_rating' not in df_.columns
     assert abs(df_['rating'][0] - 8.9) < 0.0001
     assert df_['total_votes'][0] == 99_000_000
+
+
+def test_extract_original_title(movie_details):
+    df_ = etl.extract_original_title(movie_details)
+    assert df_['original_title'][0] == 'The Dark Knight'
+
+
+def test_split_review_summary(movie_details):
+    df_ = etl.split_review_summary(movie_details)
+    required_cols = {
+        'user_reviews_num': 7700,
+        'critic_reviews_num': 433,
+        'metascore': 84
+    }
+    assert all(col in df_.columns for col in required_cols.keys())
+    assert all(int(df_[col][0]) == val for col, val in required_cols.items())
+    assert 'review_summary' not in df_.columns
