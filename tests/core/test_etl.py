@@ -30,7 +30,8 @@ def movie_details():
             'original_title': 'Original title: The Dark Knight',
             'review_summary': ("{'n_user_reviews': '7.7KUser reviews',"
                                " 'n_critic_reviews': '433Critic reviews',"
-                               " 'metascore': '84Metascore'}")
+                               " 'metascore': '84Metascore'}"),
+            'tagline': 'TaglinesGood Cop. Mad Cop.'
         }
     ]
     return pd.DataFrame(data)
@@ -109,3 +110,8 @@ def test_split_review_summary(movie_details):
     assert all(col in df_.columns for col in required_cols.keys())
     assert all(int(df_[col][0]) == val for col, val in required_cols.items())
     assert 'review_summary' not in df_.columns
+
+
+def test_extract_tagline(movie_details):
+    df_ = etl.extract_tagline(movie_details)
+    assert df_['tagline'][0] == 'Good Cop. Mad Cop.'

@@ -127,21 +127,18 @@ def split_review_summary(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     return df_.drop('review_summary', axis=1)
 
-    # df_['user_reviews_num'] = (
-    #     df_['user_reviews_num']
-    #     .str.split('User reviews', expand=True)
-    #     .iloc[:, 0]
-    # )
-    # df_['critic_reviews_num'] = (
-    #     df_['critic_reviews_num']
-    #     .str.split('Critic reviews', expand=True)
-    #     .iloc[:, 0]
-    # )
-    # df_['metascore'] = (
-    #     df_['metascore']
-    #     .str.split('Metascore', expand=True)
-    #     .iloc[:, 0]
-    # )
+
+def extract_tagline(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Extract tagline from column 'tagline'.
+    """
+    if 'tagline' not in df_raw.columns:
+        raise ValueError('No "tagline" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['tagline'] = df_['tagline'].str.split('Taglines', expand=True)[1]
+    return df_
+
 
 details_sections = [
         'Release date',
