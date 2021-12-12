@@ -49,8 +49,10 @@ class DetailsCollector:
         self._logger.info('Successfully initialized DetailsCollector')
 
     @staticmethod
-    def collect_title_details(soup: BeautifulSoup) -> Dict[str, Any]:
+    def collect_title_details(title_id: str,
+                              soup: BeautifulSoup) -> Dict[str, Any]:
         return {
+            'title_id': title_id,
             'original_title': collect_original_title(soup),
             'poster': collect_poster(soup),
             'review_summary': collect_review_summary(soup),
@@ -80,7 +82,7 @@ class DetailsCollector:
                 try:
                     response = send_request(title_url)
                     soup = BeautifulSoup(response.text, 'lxml')
-                    details = self.collect_title_details(soup)
+                    details = self.collect_title_details(title_id, soup)
                     details['title_id'] = title_id
                     # saving poster on disk
                     try:

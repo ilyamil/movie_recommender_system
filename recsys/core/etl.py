@@ -140,17 +140,6 @@ def extract_tagline(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_
 
 
-details_sections = [
-        'Release date',
-        'Country of origin',
-        'Official site',
-        'Languages',
-        'Also known as',
-        'Filming locations',
-        'Production companies'
-]
-
-
 def extract_substrings_after_anchors(s: str, anchors: List[str])\
         -> Optional[Dict[str, str]]:
     details = {}
@@ -174,3 +163,109 @@ def extract_substrings_after_anchors(s: str, anchors: List[str])\
     return details
 
 
+def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Extract the following movie details from column 'details'
+    and add them to DataFrame:
+        * 'release_date' (also convert to datetime),
+        * 'country_of_origin',
+        * 'also_known_as',
+        * 'filming_locations',
+        * 'production_companies'
+    After transformation the 'details' column is removed.
+    """
+    if 'details' not in df_raw.columns:
+        raise ValueError('No "details" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    details_sections = [
+        'Release date',
+        'Country of origin',
+        'Official sites',
+        'Languages',
+        'Also known as',
+        'Filming locations',
+        'Production companies'
+    ]
+    df_[details_sections] = df_.apply(
+        lambda x: extract_substrings_after_anchors(x, details_sections)
+    )
+    return df_.drop('details', axis=1)
+
+
+def extract_boxoffice(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Extract 'budget' and 'boxoffice' information from column 'boxoffice'.
+    These new columns are in a currency of origin and of type string with
+    leading currency sign.
+    """
+    if 'boxoffice' not in df_raw.columns:
+        raise ValueError('No "boxoffice" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    separator = 'Budget| |Gross worldwide|See detailed'
+    df_[['budget', 'boxoffice']] = (
+        df_['boxoffice']
+        .str.split(separator, expand=True)
+        .iloc[:, [1, 12]]
+        .replace({'IMDbPro': None})
+        .values
+    )
+    return df_
+
+
+def extract_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Extract runtime information in a raw form from column 'techspecs'
+    and add a column 'runtime'.
+    After transformation the 'techspecs' column is removed.
+    """
+    if 'techspecs' not in df_raw.columns:
+        raise ValueError('No "techspecs" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['runtime_min'] = (
+        df_['techspecs']
+        .str.split('Runtime| |Sound|Color', expand=True)
+        .replace('', '0')
+        .apply(lambda x: int(x[1]) * 60 + int(x[3]), axis=1)
+    )
+    return df_.drop('techspecs', axis=1)
+
+
+def parse_actors_dict(x) -> Dict[str, Any]:
+    dct, title_id = x['actors'], x['title_id']
+    records = {
+        'title_id': [],
+        'actor_id': [],
+        'actor_name': [],
+        'order_num': []
+    }
+    for name, ref in dct.items():
+        id_ = ref.split('?')[0] + '/'
+        order_num = ref.split('_')[-1]
+        records['title_id'].append(title_id)
+        records['actor_id'].append(id_)
+        records['actor_name'].append(name)
+        records['order_num'].append(order_num)
+    return records
+
+
+def normalize_actors(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a new dataframe of movies actors from column 'actors'
+    with the following columns:
+        * 'title_id' - identifier of movie when an actor plays
+        * 'actor_id' - identifier of the actor
+        * 'actor_name' - name of the actor
+        * 'order_num' - order number in cast list. Usually a main role
+            assigns with order_num = 1, for second plan order_num = 2, etc.
+    """
+    if 'actors' not in df_raw.columns:
+        raise ValueError('No "actors" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['actors'] = df_['actors'].apply(ast.literal_eval)
+    records = df_.apply(parse_actors_dict, axis=1)
+    return pd.concat((pd.DataFrame(x) for x in records.values),
+                     ignore_index=True)

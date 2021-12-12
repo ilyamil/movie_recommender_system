@@ -31,7 +31,28 @@ def movie_details():
             'review_summary': ("{'n_user_reviews': '7.7KUser reviews',"
                                " 'n_critic_reviews': '433Critic reviews',"
                                " 'metascore': '84Metascore'}"),
-            'tagline': 'TaglinesGood Cop. Mad Cop.'
+            'tagline': 'TaglinesGood Cop. Mad Cop.',
+            'details': (
+                'Release dateAugust 14, 2008 (Russia)'
+                'Countries of originUnited StatesUnited Kingdom'
+                'Official sitescentrumfilmowOfficial Facebook'
+                'LanguagesEnglishMandarin'
+                'Also known asBatman Begins 2'
+                'Filming locationsChicago, Illinois, USA'
+                'Production companiesWarner Bros.Legendary'
+                ' EntertainmentSyncopy'
+            ),
+            'boxoffice': (
+                'Budget$185,000,000 (estimated)'
+                'Gross US & Canada$534,858,444'
+                'Opening weekend US & Canada$158,411,483Jul 20, 2008'
+                'Gross worldwide$1,005,973,645'
+                'See detailed box office info on IMDbPro'
+            ),
+            'techspecs': (
+                'Runtime2 hours 32 minutesSound mixDolby Digital'
+                'SDDSDTSAspect ratio2.39 : 1'
+            )
         }
     ]
     return pd.DataFrame(data)
@@ -115,3 +136,34 @@ def test_split_review_summary(movie_details):
 def test_extract_tagline(movie_details):
     df_ = etl.extract_tagline(movie_details)
     assert df_['tagline'][0] == 'Good Cop. Mad Cop.'
+
+
+# def test_extract_movie_details(movie_details):
+#     df_ = etl.extract_movie_details(movie_details)
+#     required_col_values = {
+#         'release_date': '14-08-2008',
+#         'country_of_origin': ['United States', 'United Kingdom'],
+#         'also_known_as': 'Batman Begins 2',
+#         'filming_locations': 'Chicago, Illinois, USA',
+#         'production_companies': 'Warner Bros.Legendary EntertainmentSyncopy'
+#     }
+#     assert all(col in df_.columns for col in required_col_values.keys())
+
+
+def test_extract_boxoffice(movie_details):
+    df_ = etl.extract_boxoffice(movie_details)
+    assert ('budget' in df_.columns)\
+        and ('boxoffice' in df_.columns)
+    assert df_['budget'][0] == '$185,000,000'
+    assert df_['boxoffice'][0] == '$1,005,973,645'
+
+
+def test_extract_runtime(movie_details):
+    df_ = etl.extract_runtime(movie_details)
+    assert 'runtime_min' in df_.columns
+    assert df_['runtime_min'][0] == 152
+    assert 'techspecs' not in df_.columns
+
+
+def test_normalize_actors(movie_details):
+    assert False
