@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 import pandas as pd
 import numpy as np
 
@@ -233,7 +233,7 @@ def extract_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_.drop('techspecs', axis=1)
 
 
-def parse_actors_dict(x) -> Dict[str, Any]:
+def parse_actors(x) -> Dict[str, Any]:
     dct, title_id = x['actors'], x['title_id']
     records = {
         'title_id': [],
@@ -242,18 +242,16 @@ def parse_actors_dict(x) -> Dict[str, Any]:
         'order_num': []
     }
     for name, ref in dct.items():
-        id_ = ref.split('?')[0] + '/'
-        order_num = ref.split('_')[-1]
         records['title_id'].append(title_id)
-        records['actor_id'].append(id_)
+        records['actor_id'].append(ref.split('?')[0] + '/')
         records['actor_name'].append(name)
-        records['order_num'].append(order_num)
+        records['order_num'].append(int(ref.split('_')[-1]))
     return records
 
 
 def normalize_actors(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Create a new dataframe of movies actors from column 'actors'
+    Create a new dataframe of movie actors from column 'actors'
     with the following columns:
         * 'title_id' - identifier of movie when an actor plays
         * 'actor_id' - identifier of the actor
@@ -266,6 +264,44 @@ def normalize_actors(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     df_ = df_raw.copy(deep=False)
     df_['actors'] = df_['actors'].apply(ast.literal_eval)
-    records = df_.apply(parse_actors_dict, axis=1)
+    records = df_.apply(parse_actors, axis=1)
+    return pd.concat((pd.DataFrame(x) for x in records.values),
+                     ignore_index=True)
+
+
+def parse_recommendations(x) -> Dict[str, Any]:
+    recomms, title_id = x['imdb_recommendations'], x['title_id']
+    records = {
+        'title_id': [],
+        'suggested_title_id': [],
+        'order_num': []
+    }
+    for recomm in recomms:
+        records['title_id'].append(title_id)
+        records['suggested_title_id'].append(recomm.split('?')[0])
+        records['order_num'].append(int(recomm.split('_')[-1]))
+    return records
+
+
+def normalize_recommendations(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a new dataframe from column 'actors', contained movie
+    recommendations suggested by IMDB. The dataset contains the
+    following columns:
+        * 'title_id' - identifier of movie for which the recommendations
+            are suggested
+        * 'recommended_title_id' - identifier of the recommended movie
+        * 'order_num' - order number in cast list. Usually a main role
+            assigns with order_num = 1, for second plan order_num = 2, etc.
+    """
+    if 'imdb_recommendations' not in df_raw.columns:
+        raise ValueError('No "imdb_recommendations" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['imdb_recommendations'] = (
+        df_['imdb_recommendations']
+        .apply(ast.literal_eval)
+    )
+    records = df_.apply(parse_recommendations, axis=1)
     return pd.concat((pd.DataFrame(x) for x in records.values),
                      ignore_index=True)
