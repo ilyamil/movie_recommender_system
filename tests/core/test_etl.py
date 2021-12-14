@@ -114,6 +114,13 @@ def test_extract_substrings_after_anchors_no_anchors_in_string():
     assert all(substrings[anchor] is None for anchor in anchors)
 
 
+def test_split_with_capital_letter():
+    s = 'United StatesUnited Kingdom'
+    tokens = etl.split_with_capital_letter(s)
+    assert len(tokens) == 2
+    assert tokens == ['United States', 'United Kingdom']
+
+
 def test_split_aggregate_rating_col(movie_details):
     df_ = etl.split_aggregate_rating_col(movie_details)
 
@@ -146,16 +153,19 @@ def test_extract_tagline(movie_details):
     assert df_['tagline'][0] == 'Good Cop. Mad Cop.'
 
 
-# def test_extract_movie_details(movie_details):
-#     df_ = etl.extract_movie_details(movie_details)
-#     required_col_values = {
-#         'release_date': '14-08-2008',
-#         'country_of_origin': ['United States', 'United Kingdom'],
-#         'also_known_as': 'Batman Begins 2',
-#         'filming_locations': 'Chicago, Illinois, USA',
-#         'production_companies': 'Warner Bros.Legendary EntertainmentSyncopy'
-#     }
-#     assert all(col in df_.columns for col in required_col_values.keys())
+def test_extract_movie_details(movie_details):
+    df_ = etl.extract_movie_details(movie_details)
+    required_cols = [
+        'release_date',
+        'country_of_origin',
+        # 'also_known_as': 'Batman Begins 2',
+        # 'filming_locations': 'Chicago, Illinois, USA',
+        # 'production_companies': 'Warner Bros.Legendary EntertainmentSyncopy'
+    ]
+    assert all(col in df_.columns for col in required_cols)
+    assert df_['release_date'][0] == datetime(2008, 8, 14)
+    assert df_['country_of_origin'][0] == ['United States', 'United Kingdom']
+    assert 'details' not in df_.columns
 
 
 def test_extract_boxoffice(movie_details):

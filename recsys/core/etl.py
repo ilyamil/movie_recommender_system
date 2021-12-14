@@ -1,7 +1,17 @@
 import ast
+import re
 from typing import Optional, Dict, List, Any
 import pandas as pd
 import numpy as np
+from recsys.core.data import AbstractDataLoader
+
+
+class ReviewsProcessor:
+    def __init__(self, dataloader: AbstractDataLoader):
+        pass
+
+    def process(self):
+        pass
 
 
 def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -163,6 +173,19 @@ def extract_substrings_after_anchors(s: str, anchors: List[str])\
     return details
 
 
+def split_with_capital_letter(x):
+    tokens = re.findall('[A-Z][^A-Z]*', x)
+    countries = []
+    country = ''
+    for token in tokens:
+        stoken = token.strip()
+        country += ' ' + stoken if len(country) != 0 else stoken
+        if token[-1] != ' ':
+            countries.append(country)
+            country = ''
+    return countries
+
+
 def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Extract the following movie details from column 'details'
@@ -178,18 +201,34 @@ def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
         raise ValueError('No "details" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    details_sections = [
-        'Release date',
-        'Country of origin',
-        'Official sites',
-        'Languages',
-        'Also known as',
-        'Filming locations',
-        'Production companies'
-    ]
-    df_[details_sections] = df_.apply(
-        lambda x: extract_substrings_after_anchors(x, details_sections)
+    df_['release_date'] = (
+        df_['details']
+        .str.split('Release date|Countr', expand=True)
+        .iloc[:, 1]
+        .str.split(' ', expand=True)
+        .agg(lambda x: f'{x[0]} {x[1]} {x[2]}', axis=1)
     )
+    df_['release_date'] = pd.to_datetime(df_['release_date'],
+                                         format='%B %d, %Y',
+                                         errors='coerce')
+    df_['country_of_origin'] = (
+        df_['details']
+        .str.split('Release date|Countr| origin|Official', expand=True)
+        .apply(lambda x: split_with_capital_letter(x[3]), axis=1)
+    )
+    # details_sections = [
+    #     'Release date',
+    #     'Country of origin',
+    #     'Official sites',
+    #     'Languages',
+    #     'Also known as',
+    #     'Filming locations',
+    #     'Production companies'
+    # ]
+    # df_[details_sections] = df_.apply(
+    #     lambda x: extract_substrings_after_anchors(x, details_sections)
+    # )
+
     return df_.drop('details', axis=1)
 
 
