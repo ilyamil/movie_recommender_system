@@ -1,17 +1,46 @@
 import ast
 import re
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Tuple
 import pandas as pd
 import numpy as np
 from recsys.core.data import AbstractDataLoader
+from recsys.core.pipeline import Pipeline
 
 
-class ReviewsProcessor:
+class RawReviewsTransformer:
     def __init__(self, dataloader: AbstractDataLoader):
-        pass
+        self._dataloader = dataloader
 
-    def process(self):
-        pass
+    def transform(self) -> pd.DataFrame:
+        raw_data = self._dataloader.load_data(True)
+        pipeline = Pipeline(
+            ('split helpfulness column', split_helpfulness_col),
+            ('convert to datetime', convert_to_date)
+        )
+        return pipeline.compose(raw_data)
+
+
+class RawDetailsTransformer:
+    def __init__(self, dataloader: AbstractDataLoader):
+        self._dataloader = dataloader
+
+    def transform(self) -> Tuple[pd.DataFrame]:
+        raw_details = self._dataloader.load_data(True)
+        pipeline = Pipeline(
+            ('split aggregate rating column', split_aggregate_rating_col),
+            ('split review summary', split_review_summary),
+            ('extract original title', extract_original_title),
+            ('extract tagline', extract_tagline),
+            ('extract details', extract_movie_details),
+            ('extract boxoffice', extract_boxoffice),
+            ('extract runtime', extract_runtime)
+        )
+        details = pipeline.compose(raw_details)
+        actors = normalize_actors(details)
+        recommendations = normalize_recommendations(details)
+        processed_details = details.drop(['actors', 'imdb_recommendations'],
+                                         axis=1)
+        return processed_details, actors, recommendations
 
 
 def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -228,7 +257,6 @@ def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
     # df_[details_sections] = df_.apply(
     #     lambda x: extract_substrings_after_anchors(x, details_sections)
     # )
-
     return df_.drop('details', axis=1)
 
 

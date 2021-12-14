@@ -13,7 +13,7 @@ class AbstractModel(metaclass=ABCMeta):
         pass
 
 
-class Model:
+class AssembledModel:
     """
     Inference-ready model.
     """

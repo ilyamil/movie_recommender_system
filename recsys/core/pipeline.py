@@ -1,5 +1,4 @@
 from typing import Tuple, Callable
-from copy import copy
 
 
 class Pipeline:
@@ -18,8 +17,7 @@ class Pipeline:
             self._pipeline.append({'step_name': step[0],
                                    'step_func': step[1]})
 
-    @property
-    def schema(self):
+    def print_schema(self):
         print('Pipeline schema:')
         for num, step in enumerate(self._pipeline):
             name, func = step.values()
@@ -27,7 +25,7 @@ class Pipeline:
                   f'Transformer: {func}', sep='\n   ')
 
     def compose(self, data):
-        result = copy(data)
+        result = data
         for step in self._pipeline:
             step_func = step['step_func']
             result = step_func(result)

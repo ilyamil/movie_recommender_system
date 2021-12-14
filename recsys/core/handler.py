@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from importlib import import_module
 from recsys.utils import create_logger
-from recsys.core.model import Model
+from recsys.core.model import AssembledModel
 
 
 class RequestHandler:

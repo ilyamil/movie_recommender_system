@@ -16,7 +16,7 @@ data_collection:
       max_delay: 0.3
 
   reviews:
-    dir: 'data/raw/reviews/1pct_10pct/'
+    dir: 'data/raw/reviews/1pct/'
     id_dir: 'data/raw/identifiers/1pct/'
     log_file: 'data_collection/reviews.log'
     genres: 'all'
@@ -43,6 +43,12 @@ data_collection:
     request_delay:
       min_delay: 1
       max_delay: 2
+
+etl:
+  dir: 'data/preprocessed/1pct/'
+  reviews_dir: 'data/raw/reviews/1pct/'
+  details_dir: 'data/raw/details/1pct/'
+  posters_dir: 'data/raw/details/1pct/posters/'
 
 training:
   batch_size: 100
