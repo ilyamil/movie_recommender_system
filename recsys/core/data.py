@@ -1,6 +1,7 @@
 """
 Module contains interfaces for data manipulations.
 """
+import os
 from typing import Any, Union
 from collections.abc import Iterable
 from abc import ABCMeta, abstractmethod
@@ -9,11 +10,20 @@ from pandas import read_csv, concat
 
 class AbstractDataLoader(metaclass=ABCMeta):
     def __init__(self, path: Union[Any, Iterable[Any]], **kwargs):
-        if isinstance(path, str) or not isinstance(path, Iterable):
-            self._path = [path]
-        else:
-            self._path = path
-        self._kwargs = kwargs
+        if isinstance(path, str):
+            if os.path.isdir(path):
+                self._path = os.listdir(path)
+            elif os.path.exists(path):
+                self._path = [path]
+            else:
+                raise ValueError(f'Path {path} does not exists or empty')
+        elif isinstance(path, Iterable):
+            nonexistent_paths = [p for p in path if os.path.isfile(p)]
+            if len(nonexistent_paths) > 0:
+                fmt_paths = "\n".join(nonexistent_paths)
+                raise ValueError(f'These files do not exist: {fmt_paths}')
+            else:
+                self._path = path
 
     @abstractmethod
     def load_data(self, **kwargs) -> Any:

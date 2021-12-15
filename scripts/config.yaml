@@ -5,11 +5,12 @@
 #    save data of movies' identifiers, reviews, details, etc.
 # 2. [etl] - processing row data collected at previous step.
 # 3. [training] - model training step.
-# 4. [inference] - model configuration for inference in production
-# 5. [application] - interface for application, GUI
+# 4. [application] - model configuration for inference in
+#    production and user interface
 # 
 # Note:
-# * All directoriesm
+# * All directories (with _dir prefix) must be set up as we currently
+#   in the root directory
 logger:
   level: 'INFO'
   dir: 'logs' 
@@ -41,7 +42,7 @@ data_collection:
   details:
     dir: 'data/raw/details/1pct/'
     id_dir: 'data/raw/identifiers/1pct/'
-    poster_dir: 'data/processed/1pct/posters/'
+    poster_dir: 'data/preprocessed/1pct/posters/'
     log_file: 'data_collection/details.log'
     genres: 'all'
     request_delay:
@@ -57,13 +58,14 @@ data_collection:
       max_delay: 2
 
 etl:
-  reviews_trg_dir: 'data/preprocessed/1pct/'
-  details_trg_dir: 'data/preprocessed/1pct/'
-  reviews_src_dir: 'data/raw/reviews/1pct/'
-  details_src_dir: 'data/raw/details/1pct/'
-  posters_src_dir: 'data/processed/1pct/posters/'
+  reviews_trg: 'data/preprocessed/1pct/reviews.parquet'
+  details_trg: 'data/preprocessed/1pct/details.parquet'
+  posters_trg: 'data/processed/1pct/posters/'
+  reviews_src: 'data/raw/reviews/1pct/'
+  details_src: 'data/raw/details/1pct/'
+  posters_src: 'data/processed/1pct/posters/'
 
-training:
+model_training:
   model: null
   model_params: null
   model_dir: 'trained_models/'
@@ -73,17 +75,19 @@ training:
   postprocessor: 'recsys.core.data.IdentityDataTransformer'
   postprocessor_params: null
 
-inference:
-  model: 'recsys.models.thegodfather_model.TheGodfatherModel'
-  model_params: null
-  preprocessor: 'recsys.core.data.IdentityDataTransformer'
-  preprocessor_params: null
-  postprocessor: 'recsys.core.data.IdentityDataTransformer'
-  postprocessor_params: null
-  metadata_loader: 'recsys.core.data.CSVDataLoader'
-  metadata_file: 'data/preprocessed/1pct/details.parquet'
-  log_file: 'app/inference.log' 
 
 application:
-  model_name: default
-  delay: None
+  model_inference:
+    model: 'recsys.models.thegodfather_model.TheGodfatherModel'
+    model_params: null
+    model_params_path: null
+    preprocessor: 'recsys.core.data.IdentityDataTransformer'
+    preprocessor_params: null
+    postprocessor: 'recsys.core.data.IdentityDataTransformer'
+    postprocessor_params: null
+    metadata_loader: 'recsys.core.data.CSVDataLoader'
+    metadata_file: 'data/preprocessed/1pct/details.parquet'
+    log_file: 'app/inference.log' 
+
+  user_interface:
+    interface: 'CLI'

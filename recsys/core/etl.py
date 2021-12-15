@@ -2,6 +2,7 @@
 Module contains implementations of abstract classes to Extract,
 Transform, Load (ETL) raw data collected using imdb parser.
 """
+import os
 import ast
 import re
 from typing import Optional, Dict, List, Any, Tuple
