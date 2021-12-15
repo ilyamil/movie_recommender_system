@@ -1,3 +1,6 @@
+"""
+Module contains interfaces for data manipulations.
+"""
 from typing import Any, Union
 from collections.abc import Iterable
 from abc import ABCMeta, abstractmethod

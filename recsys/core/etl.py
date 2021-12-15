@@ -1,13 +1,17 @@
+"""
+Module contains implementations of abstract classes to Extract,
+Transform, Load (ETL) raw data collected using imdb parser.
+"""
 import ast
 import re
 from typing import Optional, Dict, List, Any, Tuple
 import pandas as pd
 import numpy as np
-from recsys.core.data import AbstractDataLoader
+from recsys.core.data import AbstractDataLoader, AbstractDataTransformer
 from recsys.core.pipeline import Pipeline
 
 
-class RawReviewsTransformer:
+class RawReviewsTransformer(AbstractDataTransformer):
     def __init__(self, dataloader: AbstractDataLoader):
         self._dataloader = dataloader
 
@@ -20,7 +24,7 @@ class RawReviewsTransformer:
         return pipeline.compose(raw_data)
 
 
-class RawDetailsTransformer:
+class RawDetailsTransformer(AbstractDataTransformer):
     def __init__(self, dataloader: AbstractDataLoader):
         self._dataloader = dataloader
 
@@ -38,8 +42,10 @@ class RawDetailsTransformer:
         details = pipeline.compose(raw_details)
         actors = normalize_actors(details)
         recommendations = normalize_recommendations(details)
-        processed_details = details.drop(['actors', 'imdb_recommendations'],
-                                         axis=1)
+        processed_details = (
+            details
+            .drop(['actors', 'imdb_recommendations'], axis=1)
+        )
         return processed_details, actors, recommendations
 
 
