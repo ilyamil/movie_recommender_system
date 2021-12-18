@@ -9,10 +9,11 @@ from pandas import read_csv, concat
 
 
 class AbstractDataLoader(metaclass=ABCMeta):
-    def __init__(self, path: Union[Any, Iterable[Any]], **kwargs):
+    def __init__(self, path: Union[Any, Iterable[Any]], **load_kwargs):
         if isinstance(path, str):
             if os.path.isdir(path):
-                self._path = os.listdir(path)
+                self._path = [os.path.join(path, file)
+                              for file in os.listdir(path)]
             elif os.path.exists(path):
                 self._path = [path]
             else:
@@ -24,6 +25,7 @@ class AbstractDataLoader(metaclass=ABCMeta):
                 raise ValueError(f'These files do not exist: {fmt_paths}')
             else:
                 self._path = path
+        self._load_kwargs = load_kwargs
 
     @abstractmethod
     def load_data(self, **kwargs) -> Any:
@@ -34,10 +36,10 @@ class CSVDataLoader(AbstractDataLoader):
     def __init__(self, path: Union[Any, Iterable[Any]], **kwargs):
         super().__init__(path, **kwargs)
 
-    def load_data(self, union: bool = False, **union_kwargs) -> Any:
-        data = (read_csv(p, **self._kwargs) for p in self._path)
+    def load_data(self, union: bool = True) -> Any:
+        data = (read_csv(p, **self._load_kwargs) for p in self._path)
         if union:
-            return concat(data, **union_kwargs)
+            return concat(data)
         return data
 
 

@@ -1,53 +1,11 @@
 """
-Module contains implementations of abstract classes to Extract,
-Transform, Load (ETL) raw data collected using imdb parser.
+Module contains functions to Extract, Transform, Load (ETL)
+raw data collected by imdb parser.
 """
-import os
 import ast
 import re
-from typing import Optional, Dict, List, Any, Tuple
+from typing import Optional, Dict, List, Any
 import pandas as pd
-import numpy as np
-from recsys.core.data import AbstractDataLoader, AbstractDataTransformer
-from recsys.core.pipeline import Pipeline
-
-
-class RawReviewsTransformer(AbstractDataTransformer):
-    def __init__(self, dataloader: AbstractDataLoader):
-        self._dataloader = dataloader
-
-    def transform(self) -> pd.DataFrame:
-        raw_data = self._dataloader.load_data(True)
-        pipeline = Pipeline(
-            ('split helpfulness column', split_helpfulness_col),
-            ('convert to datetime', convert_to_date)
-        )
-        return pipeline.compose(raw_data)
-
-
-class RawDetailsTransformer(AbstractDataTransformer):
-    def __init__(self, dataloader: AbstractDataLoader):
-        self._dataloader = dataloader
-
-    def transform(self) -> Tuple[pd.DataFrame]:
-        raw_details = self._dataloader.load_data(True)
-        pipeline = Pipeline(
-            ('split aggregate rating column', split_aggregate_rating_col),
-            ('split review summary', split_review_summary),
-            ('extract original title', extract_original_title),
-            ('extract tagline', extract_tagline),
-            ('extract details', extract_movie_details),
-            ('extract boxoffice', extract_boxoffice),
-            ('extract runtime', extract_runtime)
-        )
-        details = pipeline.compose(raw_details)
-        actors = normalize_actors(details)
-        recommendations = normalize_recommendations(details)
-        processed_details = (
-            details
-            .drop(['actors', 'imdb_recommendations'], axis=1)
-        )
-        return processed_details, actors, recommendations
 
 
 def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -69,6 +27,31 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         .astype(int)
     )
     return df_.drop(columns=['helpfulness'])
+
+
+def correct_review_author(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Standardize all review author identifiers in column 'author'
+    by preserving only minimum valid part in form of '/user/urXXXXXX'.
+    """
+    if 'author' not in df_raw.columns:
+        raise ValueError('No "author" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['author'] = ['author'].str.split('?', expand=True)[0]
+    return df_
+
+
+def cut_off_review_title_newline(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Removes '\n' at the end of each review title. 'title' column required.
+    """
+    if 'title' not in df_raw.columns:
+        raise ValueError('No "title" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['title'] = df_['title'].str.split('\n', expand=True)[0]
+    return df_
 
 
 def convert_to_date(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -111,6 +94,7 @@ def split_aggregate_rating_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         raise ValueError('No "agg_rating" column in input data')
 
     df_ = df_raw.copy(deep=False)
+    df_.loc[~df_['agg_rating'].str.contains('/10'), 'agg_rating'] = None
     df_[['rating', 'total_votes']] = (
         df_['agg_rating']
         .str.split('/10', expand=True)
@@ -119,7 +103,7 @@ def split_aggregate_rating_col(df_raw: pd.DataFrame) -> pd.DataFrame:
     df_['total_votes'] = df_['total_votes'].apply(expand_short_form)
     return (
         df_
-        .astype({'rating': np.float32, 'total_votes': np.int32})
+        .astype({'rating': float, 'total_votes': float})
         .drop('agg_rating', axis=1)
     )
 
@@ -209,17 +193,24 @@ def extract_substrings_after_anchors(s: str, anchors: List[str])\
     return details
 
 
-def split_with_capital_letter(x):
-    tokens = re.findall('[A-Z][^A-Z]*', x)
-    countries = []
-    country = ''
-    for token in tokens:
-        stoken = token.strip()
-        country += ' ' + stoken if len(country) != 0 else stoken
-        if token[-1] != ' ':
-            countries.append(country)
-            country = ''
-    return countries
+def split_with_capital_letter(x) -> Optional[List[str]]:
+    """
+    Splits a string into tokens by capital letter occurance.
+    Example: 'ThisIsString' -> ['This', 'Is', 'String']
+    """
+    try:
+        tokens = re.findall('[A-Z][^A-Z]*', x)
+        entities = []
+        entity = ''
+        for token in tokens:
+            stoken = token.strip()
+            entity += ' ' + stoken if len(entity) != 0 else stoken
+            if token[-1] != ' ':
+                entities.append(entity)
+                entity = ''
+        return entities
+    except Exception:
+        return []
 
 
 def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -228,42 +219,39 @@ def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
     and add them to DataFrame:
         * 'release_date' (also convert to datetime),
         * 'country_of_origin',
-        * 'also_known_as',
-        * 'filming_locations',
-        * 'production_companies'
+        * 'production_company'
     After transformation the 'details' column is removed.
     """
     if 'details' not in df_raw.columns:
         raise ValueError('No "details" column in input data')
 
     df_ = df_raw.copy(deep=False)
+
+    date_pattern = 'Release date(.+?)Countr'
     df_['release_date'] = (
         df_['details']
-        .str.split('Release date|Countr', expand=True)
-        .iloc[:, 1]
+        .str.split(date_pattern, expand=True)[1]
         .str.split(' ', expand=True)
         .agg(lambda x: f'{x[0]} {x[1]} {x[2]}', axis=1)
     )
     df_['release_date'] = pd.to_datetime(df_['release_date'],
                                          format='%B %d, %Y',
                                          errors='coerce')
+
+    country_pattern = '(Country of origin|Countries of origin)(.+?)Official'
     df_['country_of_origin'] = (
         df_['details']
-        .str.split('Release date|Countr| origin|Official', expand=True)
-        .apply(lambda x: split_with_capital_letter(x[3]), axis=1)
+        .str.split(country_pattern, expand=True)[2]
+        .apply(lambda x: split_with_capital_letter(x))
     )
-    # details_sections = [
-    #     'Release date',
-    #     'Country of origin',
-    #     'Official sites',
-    #     'Languages',
-    #     'Also known as',
-    #     'Filming locations',
-    #     'Production companies'
-    # ]
-    # df_[details_sections] = df_.apply(
-    #     lambda x: extract_substrings_after_anchors(x, details_sections)
-    # )
+
+    company_pattern = '(Production companies|Production company)(.+?)See more'
+    df_['production_company'] = (
+        df_['details']
+        .str.split(company_pattern, expand=True)[2]
+        .apply(lambda x: split_with_capital_letter(x))
+    )
+
     return df_.drop('details', axis=1)
 
 
@@ -288,6 +276,13 @@ def extract_boxoffice(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_
 
 
+def convert_runtime_to_minutes(hours: str, minutes: str) -> Optional[int]:
+    try:
+        return int(hours) * 60 + int(minutes)
+    except Exception:
+        return None
+
+
 def extract_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Extract runtime information in a raw form from column 'techspecs'
@@ -302,7 +297,7 @@ def extract_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
         df_['techspecs']
         .str.split('Runtime| |Sound|Color', expand=True)
         .replace('', '0')
-        .apply(lambda x: int(x[1]) * 60 + int(x[3]), axis=1)
+        .apply(lambda x: convert_runtime_to_minutes(x[1], x[3]), axis=1)
     )
     return df_.drop('techspecs', axis=1)
 
@@ -323,26 +318,6 @@ def parse_actors(x) -> Dict[str, Any]:
     return records
 
 
-def normalize_actors(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create a new dataframe of movie actors from column 'actors'
-    with the following columns:
-        * 'title_id' - identifier of movie when an actor plays
-        * 'actor_id' - identifier of the actor
-        * 'actor_name' - name of the actor
-        * 'order_num' - order number in cast list. Usually a main role
-            assigns with order_num = 1, for second plan order_num = 2, etc.
-    """
-    if 'actors' not in df_raw.columns:
-        raise ValueError('No "actors" column in input data')
-
-    df_ = df_raw.copy(deep=False)
-    df_['actors'] = df_['actors'].apply(ast.literal_eval)
-    records = df_.apply(parse_actors, axis=1)
-    return pd.concat((pd.DataFrame(x) for x in records.values),
-                     ignore_index=True)
-
-
 def parse_recommendations(x) -> Dict[str, Any]:
     recomms, title_id = x['imdb_recommendations'], x['title_id']
     records = {
@@ -357,25 +332,94 @@ def parse_recommendations(x) -> Dict[str, Any]:
     return records
 
 
-def normalize_recommendations(df_raw: pd.DataFrame) -> pd.DataFrame:
+def parse_countries(x) -> Dict[str, Any]:
+    countries, title_id = x['country_of_origin'], x['title_id']
+    records = {
+        'title_id': [],
+        'country': [],
+        'order_num': []
+    }
+    for num, country in enumerate(countries):
+        records['title_id'].append(title_id)
+        records['country'].append(country)
+        records['order_num'].append(int(num + 1))
+    return records
+
+
+def parse_companies(x) -> Dict[str, Any]:
+    companies, title_id = x['production_company'], x['title_id']
+    records = {
+        'title_id': [],
+        'company': [],
+        'order_num': []
+    }
+    for num, company in enumerate(companies):
+        records['title_id'].append(title_id)
+        records['company'].append(company)
+        records['order_num'].append(int(num + 1))
+    return records
+
+
+def normalize(df_raw: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """
-    Create a new dataframe from column 'actors', contained movie
-    recommendations suggested by IMDB. The dataset contains the
-    following columns:
-        * 'title_id' - identifier of movie for which the recommendations
-            are suggested
-        * 'recommended_title_id' - identifier of the recommended movie
-        * 'order_num' - order number in cast list. Usually a main role
-            assigns with order_num = 1, for second plan order_num = 2, etc.
+    Create a dictionary with following keys:
+    * 'main' - DataFrame with movie details (normalized columns excluded)
+    * 'imdb_recommendations' - DataFrame with movie identifiers and
+        recommendations suggested by imdb for these movies
+    * 'actors' - DataFrame with movie identifiers and its actors played in
+    * 'country_of_origin' - DataFrame with movie identifiers and its
+        country of origin
+    * 'production_company' - DataFrame with movie identifiers and its
+        production companies
+    After transformation the normalized columns is removed.
+    All normalized DataFrames has an ID column - 'title_id'.
     """
-    if 'imdb_recommendations' not in df_raw.columns:
-        raise ValueError('No "imdb_recommendations" column in input data')
+    normalize_cols = [
+        'imdb_recommendations',
+        'actors',
+        'country_of_origin',
+        'production_company'
+    ]
+    if any(col not in df_raw.columns for col in normalize_cols):
+        cols_fmt = '\n' + '\n'.join(normalize_cols)
+        raise ValueError(
+            f'There are no one or many of these cols: {cols_fmt}'
+        )
 
     df_ = df_raw.copy(deep=False)
+
     df_['imdb_recommendations'] = (
-        df_['imdb_recommendations']
-        .apply(ast.literal_eval)
+        df_['imdb_recommendations'].apply(ast.literal_eval)
     )
-    records = df_.apply(parse_recommendations, axis=1)
-    return pd.concat((pd.DataFrame(x) for x in records.values),
-                     ignore_index=True)
+    recomms = df_.apply(parse_recommendations, axis=1)
+    recomms_df = pd.concat(
+        (pd.DataFrame(x) for x in recomms.values),
+        ignore_index=True
+    )
+
+    df_['actors'] = df_['actors'].apply(ast.literal_eval)
+    actors = df_.apply(parse_actors, axis=1)
+    actors_df = pd.concat(
+        (pd.DataFrame(x) for x in actors.values),
+        ignore_index=True
+    )
+
+    countries = df_.apply(parse_countries, axis=1)
+    countries_df = pd.concat(
+        (pd.DataFrame(x) for x in countries.values),
+        ignore_index=True
+    )
+
+    companies = df_.apply(parse_companies, axis=1)
+    companies_df = pd.concat(
+        (pd.DataFrame(x) for x in companies.values),
+        ignore_index=True
+    )
+
+    return {
+        'main': df_.drop(columns=normalize_cols),
+        'imdb_recommendations': recomms_df,
+        'actors': actors_df,
+        'country_of_origin': countries_df,
+        'production_company': companies_df
+    }

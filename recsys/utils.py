@@ -33,11 +33,11 @@ def wait(min_time: int, max_time: int = None) -> None:
     time.sleep(sleep_for)
 
 
-def get_full_path(dirname: str, filename: str = None) -> str:
-    dirname_tokens = os.path.split(dirname)
-    if filename:
-        return os.path.join(ROOT_PATH, *dirname_tokens, filename)
-    return os.path.join(ROOT_PATH, *dirname_tokens)
+def get_full_path(dirname_or_filename: str, filename: str = None) -> str:
+    path_norm = os.path.normpath(dirname_or_filename)
+    path_tokens = path_norm.split(os.sep)
+    return os.path.join(ROOT_PATH, *path_tokens,
+                        filename if filename else '')
 
 
 def dump_obj(obj: Any, path: str, mode: str = 'wb') -> None:

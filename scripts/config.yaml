@@ -9,8 +9,9 @@
 #    production and user interface
 # 
 # Note:
-# * All directories (with _dir prefix) must be set up as we currently
-#   in the root directory
+# * All directories (with _dir postfix) must be set up as we currently
+#   in the root directory, except logger. In case of logger paths provided
+#   are from root/logs/
 logger:
   level: 'INFO'
   dir: 'logs' 
@@ -58,8 +59,8 @@ data_collection:
       max_delay: 2
 
 etl:
-  reviews_trg: 'data/preprocessed/1pct/reviews.parquet'
-  details_trg: 'data/preprocessed/1pct/details.parquet'
+  reviews_trg: 'data/preprocessed/1pct/'
+  details_trg: 'data/preprocessed/1pct/'
   posters_trg: 'data/processed/1pct/posters/'
   reviews_src: 'data/raw/reviews/1pct/'
   details_src: 'data/raw/details/1pct/'
