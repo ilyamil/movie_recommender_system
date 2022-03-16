@@ -49,10 +49,8 @@ class DetailsCollector:
         self._logger.info('Successfully initialized DetailsCollector')
 
     @staticmethod
-    def collect_title_details(title_id: str,
-                              soup: BeautifulSoup) -> Dict[str, Any]:
+    def collect_title_details(soup: BeautifulSoup) -> Dict[str, Any]:
         return {
-            'title_id': title_id,
             'original_title': collect_original_title(soup),
             'poster': collect_poster(soup),
             'review_summary': collect_review_summary(soup),
@@ -82,7 +80,10 @@ class DetailsCollector:
                 try:
                     response = send_request(title_url)
                     soup = BeautifulSoup(response.text, 'lxml')
-                    details = self.collect_title_details(title_id, soup)
+                    details = {
+                        'title_id': title_id,
+                        **self.collect_title_details(soup)
+                    }
                     details['title_id'] = title_id
                     # saving poster on disk
                     try:
@@ -147,37 +148,12 @@ def collect_poster(soup: BeautifulSoup) -> Optional[bytes]:
 
 def collect_review_summary(soup: BeautifulSoup)\
         -> Optional[Dict[str, Any]]:
-    filters_rc = {'data-testid': 'reviewContent-all-reviews'}
-    filters_el = {'class', 'three-Elements'}
+    keys = ['user_reviews_num', 'criti_review_num', 'metascore']
     try:
-        review_content_raw = (
-            soup
-            .find('ul', filters_rc)
-            .find_all('span', filters_el)
-        )
+        scores = [sc.text for sc in soup.find_all('span', class_=['score'])]
     except Exception:
-        return {
-            'n_user_reviews': None,
-            'n_critic_reviews': None,
-            'metascore': None,
-        }
-    try:
-        user_reviews = review_content_raw[0].text
-    except Exception:
-        user_reviews = None
-    try:
-        critic_reviews = review_content_raw[1].text
-    except Exception:
-        critic_reviews = None
-    try:
-        metascore = review_content_raw[2].text
-    except Exception:
-        metascore = None
-    return {
-        'n_user_reviews': user_reviews,
-        'n_critic_reviews': critic_reviews,
-        'metascore': metascore,
-    }
+        scores = [None, None, None]
+    return dict(zip(keys, scores))
 
 
 def collect_aggregate_rating(soup: BeautifulSoup) -> Optional[str]:
