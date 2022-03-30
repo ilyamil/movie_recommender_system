@@ -2,7 +2,8 @@
 /data
 *.pytest_cache
 pytest_cache/
-recsys.egg-info/
+*.egg-info/
 *pycache*
 **/__pycache__
 *.code-workspace
+movie_recsys_env/
