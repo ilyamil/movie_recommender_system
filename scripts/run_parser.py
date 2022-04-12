@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
@@ -12,7 +13,7 @@ ATTRIBUTES = [
     'reviews',
     'user_reviews'
 ]
-CONFIG_FILE = 'config.yaml'
+CONFIG_FILE = os.path.join('config', 'parser_config.yaml')
 
 
 def parse_arguments():

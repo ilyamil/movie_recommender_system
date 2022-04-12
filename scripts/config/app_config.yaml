@@ -1,0 +1,13 @@
+model_inference:
+  model: 'recsys.models.thegodfather_model.TheGodfatherModel'
+  model_params: null
+  model_params_path: null
+  preprocessor: 'recsys.core.data.IdentityDataTransformer'
+  preprocessor_params: null
+  postprocessor: 'recsys.core.data.IdentityDataTransformer'
+  postprocessor_params: null
+  metadata_loader: 'recsys.core.data.CSVDataLoader'
+  metadata_file: 'data/preprocessed/1pct/details.parquet'
+  log_file: 'app/inference.log' 
+user_interface:
+  interface: 'CLI'

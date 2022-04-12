@@ -1,0 +1,8 @@
+model: null
+model_params: null
+model_dir: 'trained_models/'
+data_dir: 'data/preprocessed/1pct/'
+preprocessor: 'recsys.core.data.IdentityDataTransformer'
+preprocessor_params: null
+postprocessor: 'recsys.core.data.IdentityDataTransformer'
+postprocessor_params: null
