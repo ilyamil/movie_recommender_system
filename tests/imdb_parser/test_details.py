@@ -32,12 +32,8 @@ def test_collect_poster(page):
 
 def test_collect_review_summary(page):
     rev_content = details.collect_review_summary(page)
-    content_fields = [
-        'n_user_reviews',
-        'n_critic_reviews',
-        'metascore'
-    ]
-    assert all(key in rev_content for key in content_fields)
+    summary_fields = ['user_reviews_num', 'critic_review_num', 'metascore']
+    assert all(key in rev_content for key in summary_fields)
     assert all(len(v) > 0 for v in rev_content.values())
 
 

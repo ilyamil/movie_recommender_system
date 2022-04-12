@@ -148,7 +148,7 @@ def collect_poster(soup: BeautifulSoup) -> Optional[bytes]:
 
 def collect_review_summary(soup: BeautifulSoup)\
         -> Optional[Dict[str, Any]]:
-    keys = ['user_reviews_num', 'criti_review_num', 'metascore']
+    keys = ['user_reviews_num', 'critic_review_num', 'metascore']
     try:
         scores = [sc.text for sc in soup.find_all('span', class_=['score'])]
     except Exception:
