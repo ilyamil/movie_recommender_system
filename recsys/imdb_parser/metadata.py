@@ -129,10 +129,9 @@ class MetadataCollector:
 
 
 def collect_original_title(soup: BeautifulSoup) -> Optional[str]:
-    filters = {'data-testid': 'hero-title-block__original-title'}
+    filters = {'data-testid': 'hero-title-block__title'}
     try:
-        title_raw = soup.find('div', filters).text
-        return title_raw.replace('Original title: ', '')
+        return soup.find('h1', filters).text
     except Exception:
         return None
 
