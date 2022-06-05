@@ -1,11 +1,11 @@
-import os
 import re
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from recsys.utils import (send_request, create_logger,
-                          write_csv, load_obj, get_full_path,
-                          write_bytest_to_image, wait)
+from recsys.utils import (save_img, send_request, create_logger,
+                          read_json, write_json, get_full_path,
+                          wait)
+from boto3 import client
 
 
 BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
@@ -14,13 +14,29 @@ TOP_N_ACTORS = 10
 
 
 class MetadataCollector:
-    def __init__(self, config: Dict[str, Any]):
-        self._save_dir = config['dir']
-        self._id_dir = config['id_dir']
-        self._poster_dir = config['poster_dir']
+    def __init__(self, config: Dict[str, Any],
+                 credentials: Dict[str, str] = None):
+        self._config = config
+        self._metadata_file = config['metadata_file']
         self._genres = config['genres']
         self._min_delay = config['min_delay']
         self._max_delay = config['max_delay']
+
+        if config['s3_poster_dir']:
+            if not credentials:
+                raise ValueError(
+                    'No credentials were passed.'
+                    + ' You must either pass credentials'
+                    + ' or set a field "s3_poster_dir" to null in config file'
+                )
+            self._s3_client = client(
+                's3',
+                aws_access_key_id=credentials['access_key'],
+                aws_secret_access_key=credentials['secret_access_key']
+            )
+            self._poster_dir = config['s3_poster_dir']
+        else:
+            self._poster_dir = config['poster_dir']
 
         self._logger = create_logger(filename=config['log_file'],
                                      msg_format=config['log_msg_format'],
@@ -30,11 +46,11 @@ class MetadataCollector:
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
 
-        id_path = get_full_path(self._id_dir)
-        available_genres = [
-            genre.split('.')[0]
-            for genre in os.listdir(id_path)
-        ]
+        self._movie_metadata = read_json(get_full_path(self._metadata_file))
+        available_genres = {
+            item['main_genre']
+            for item in self._movie_metadata.values()
+        }
         if 'all' not in self._genres:
             use_genres = set(self._genres).intersection(available_genres)
             genre_diff = set(self._genres) - set(use_genres)
@@ -72,59 +88,53 @@ class MetadataCollector:
             'actors': collect_actors(soup),
             'imdb_recommendations': collect_imdb_recommendations(soup),
             'details': collect_details_summary(soup),
-            'boxoffice': collect_boxoffice(soup),
-            'runtime': collect_runtime(soup)
+            'boxoffice': collect_boxoffice(soup)
         }
 
     def collect(self) -> None:
         print('Collecting details...')
         for genre in self._genres:
-            genre_details = []
-            genre_path = get_full_path(self._id_dir, f'{genre}.pkl')
-            tqdm_params = {
-                'iterable': load_obj(genre_path),
-                'desc': genre,
-                'bar_format': BAR_FORMAT
-            }
-            for title_id in tqdm(**tqdm_params):
+            title_ids = [
+                t for t, v in self._movie_metadata.items()
+                if v['main_genre'] == genre
+            ]
+            for title_id in tqdm(title_ids, genre, bar_format=BAR_FORMAT):
                 title_url = BASE_URL.format(title_id)
                 try:
                     response = send_request(title_url)
                     soup = BeautifulSoup(response.text, 'lxml')
-                    details = {
-                        'title_id': title_id,
-                        **self.collect_title_details(soup)
-                    }
-                    details['title_id'] = title_id
+                    details = self.collect_title_details(soup)
                     # saving poster on disk
                     try:
-                        poster = details['poster']
-                        poster_name = f'{title_id.split("/")[-2]}.jpeg'
-                        poster_path = get_full_path(
-                            self._poster_dir, poster_name
+                        id_ = title_id.replace('/title/', '')[:-1]
+                        save_img(
+                            img=details['poster'],
+                            img_name=f'{id_}.jpeg',
+                            config=self._config,
+                            s3_client=self._s3_client
                         )
-                        write_bytest_to_image(poster, poster_path)
+                        self._logger.info(
+                            f'Collected metadata for title {title_id}'
+                        )
                     except Exception as e:
                         self._logger.warn(
                             f'Exception in saving poster for title {title_id}'
                             f' with message: {e}'
                         )
-
                     del details['poster']
-                    genre_details.append(details)
-
-                    wait(self._min_delay, self._max_delay)
+                    self._movie_metadata[title_id] |= details
                 except Exception:
                     self._logger.warn(
                         f'Exception in parsing {title_url}'
                     )
 
-            save_path = get_full_path(self._save_dir, f'{genre}.csv')
-            write_csv(genre_details, save_path)
+                wait(self._min_delay, self._max_delay)
+
+            filepath = get_full_path(self._metadata_file)
+            write_json(self._movie_metadata, filepath)
 
             self._logger.info(
-                f'Total collected {len(genre_details)} reviews'
-                f' in genre {genre.upper()}'
+                f'Collected metadata for all titles in genre {genre}'
             )
 
 
@@ -159,7 +169,7 @@ def collect_poster(soup: BeautifulSoup) -> Optional[bytes]:
 
 def collect_review_summary(soup: BeautifulSoup)\
         -> Optional[Dict[str, Any]]:
-    keys = ['user_reviews_num', 'critic_review_num', 'metascore']
+    keys = ['user_review_num', 'critic_review_num', 'metascore']
     try:
         scores = [sc.text for sc in soup.find_all('span', class_=['score'])]
     except Exception:
@@ -212,7 +222,7 @@ def collect_genres(soup: BeautifulSoup) -> Optional[List[str]]:
 
 
 def collect_details_summary(soup: BeautifulSoup)\
-        -> Optional[Dict[str, List[str]]]:
+        -> Dict[str, Union[List[str], str]]:
     filters = {
         'release_date':
             {'data-testid': 'title-details-releasedate'},
@@ -235,6 +245,15 @@ def collect_details_summary(soup: BeautifulSoup)\
         except Exception:
             entity = None
         details[name] = entity
+
+    # add runtime info
+    runtime_filter = {'data-testid': 'title-techspec_runtime'}
+    try:
+        runtime = soup.find('li', runtime_filter).div.text
+    except Exception:
+        runtime = None
+    details['runtime'] = runtime
+
     return details
 
 
@@ -257,11 +276,3 @@ def collect_boxoffice(soup: BeautifulSoup) -> Optional[Dict[str, List[str]]]:
             entity = None
         boxoffice[name] = entity
     return boxoffice
-
-
-def collect_runtime(soup: BeautifulSoup) -> Optional[str]:
-    filters = {'data-testid': 'title-techspec_runtime'}
-    try:
-        return soup.find('li', filters).div.text
-    except Exception:
-        return None

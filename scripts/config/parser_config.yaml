@@ -1,15 +1,28 @@
 id:
-  dir: 'data/raw/identifiers/1pct'
+  metadata_file: 'data/metadata/metadata.json'
   genres: 'all'
   n_titles: null
   pct_titles: 1
   min_delay: 0.2
   max_delay: 0.3
-  log_file: 'data_collection/identifiers.log'
-  level: 'INFO'
-  dir: 'logs' 
-  msg_format: '%(asctime)s %(levelname)s %(message)s'
-  dt_format: '%Y-%m-%d %H:%M:%S'
+  log_file: 'logs/imdb_parser/identifiers.log'
+  log_level: 'INFO'
+  log_msg_format: '%(asctime)s %(levelname)s %(message)s'
+  log_dt_format: '%Y-%m-%d %H:%M:%S'
+
+metadata:
+  metadata_file: 'data/metadata/metadata.json'
+  poster_dir: 'data/posters/'
+  s3_bucket: 'movie-on-friday'
+  s3_poster_dir: 'posters'
+  dynamodb_region: 'us-east-1'
+  genres: 'all'
+  min_delay: 0.1
+  max_delay: 0.2
+  log_file: 'logs/imdb_parser/details.log'
+  log_level: 'INFO'
+  log_msg_format: '%(asctime)s %(levelname)s %(message)s'
+  log_dt_format: '%Y-%m-%d %H:%M:%S'
 
 reviews:
   dir: 'data/raw/reviews/1pct/'
@@ -19,32 +32,7 @@ reviews:
   pct_reviews: 10
   min_delay: 0.1
   max_delay: 0.2
-  log_file: 'data_collection/reviews.log'
-  level: 'INFO'
-  dir: 'logs' 
-  msg_format: '%(asctime)s %(levelname)s %(message)s'
-  dt_format: '%Y-%m-%d %H:%M:%S'  
-
-details:
-  dir: 'data/raw/details/1pct/'
-  id_dir: 'data/raw/identifiers/1pct/'
-  poster_dir: 'data/preprocessed/1pct/posters/'
-  genres: 'all'
-  min_delay: 0.1
-  max_delay: 0.2
-  log_file: 'data_collection/details.log'
-  level: 'INFO'
-  dir: 'logs' 
-  msg_format: '%(asctime)s %(levelname)s %(message)s'
-  dt_format: '%Y-%m-%d %H:%M:%S'
-
-user_reviews:
-  dir: 'data/raw/other_reviews'
-  id_dir: 'data/raw/identifiers/1pct'
-  min_delay: 1
-  max_delay: 2
-  log_file: 'data_collection/user_reviews.log'
-  level: 'INFO'
-  dir: 'logs' 
-  msg_format: '%(asctime)s %(levelname)s %(message)s'
-  dt_format: '%Y-%m-%d %H:%M:%S'
+  log_file: 'logs/imdb_parser/reviews.log'
+  log_level: 'INFO'
+  log_msg_format: '%(asctime)s %(levelname)s %(message)s'
+  log_dt_format: '%Y-%m-%d %H:%M:%S'  

@@ -6,3 +6,5 @@ pytest_cache/
 **/__pycache__
 *.code-workspace
 movie_recsys_env/
+*.env
+**/credentials.yaml

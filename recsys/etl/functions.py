@@ -365,12 +365,13 @@ def normalize(df_raw: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     Create a dictionary with following keys:
     * 'main' - DataFrame with movie details (normalized columns excluded)
     * 'imdb_recommendations' - DataFrame with movie identifiers and
-        recommendations suggested by imdb for these movies
+                               recommendations suggested by imdb for
+                               these movies
     * 'actors' - DataFrame with movie identifiers and its actors played in
     * 'country_of_origin' - DataFrame with movie identifiers and its
-        country of origin
+                            country of origin
     * 'production_company' - DataFrame with movie identifiers and its
-        production companies
+                             production companies
     After transformation the normalized columns is removed.
     All normalized DataFrames has an ID column - 'title_id'.
     """

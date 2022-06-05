@@ -32,7 +32,7 @@ def test_collect_poster(page):
 
 def test_collect_review_summary(page):
     rev_content = metadata.collect_review_summary(page)
-    summary_fields = ['user_reviews_num', 'critic_review_num', 'metascore']
+    summary_fields = ['user_review_num', 'critic_review_num', 'metascore']
     assert all(key in rev_content for key in summary_fields)
     assert all(len(v) > 0 for v in rev_content.values())
 
@@ -73,7 +73,8 @@ def test_collect_details(page):
         'language',
         'also_known_as',
         'production_companies',
-        'filming_locations'
+        'filming_locations',
+        'runtime'
     ]
     assert all(section in details_summary.keys() for section in sections)
 
@@ -83,8 +84,3 @@ def test_collect_boxoffice(page):
     assert boxoffice is not None
     assert 'budget' in boxoffice.keys()
     assert boxoffice['budget'] == '$160,000,000 (estimated)'
-
-
-def test_collect_runtime(page):
-    runtime = metadata.collect_runtime(page)
-    assert runtime == '1 hour 58 minutes'
