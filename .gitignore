@@ -8,3 +8,5 @@ pytest_cache/
 movie_recsys_env/
 *.env
 **/credentials.yaml
+*.ipynb_checkpoints
+**/*.log
