@@ -12,10 +12,6 @@ id:
 
 metadata:
   metadata_file: 'data/metadata/metadata.json'
-  poster_dir: 'data/posters/'
-  s3_bucket: 'movie-on-friday'
-  s3_poster_dir: 'posters'
-  dynamodb_region: 'us-east-1'
   genres: 'all'
   min_delay: 0.1
   max_delay: 0.2

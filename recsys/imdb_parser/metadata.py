@@ -2,10 +2,8 @@ import re
 from typing import Optional, Dict, List, Any, Union
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from recsys.utils import (save_img, send_request, create_logger,
-                          read_json, write_json, get_full_path,
-                          wait)
-from boto3 import client
+from recsys.utils import (send_request, create_logger, read_json, write_json,
+                          get_full_path, wait)
 
 
 BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
@@ -14,34 +12,19 @@ TOP_N_ACTORS = 10
 
 
 class MetadataCollector:
-    def __init__(self, config: Dict[str, Any],
-                 credentials: Dict[str, str] = None):
+    def __init__(self, config: Dict[str, Any]):
         self._config = config
         self._metadata_file = config['metadata_file']
         self._genres = config['genres']
         self._min_delay = config['min_delay']
         self._max_delay = config['max_delay']
 
-        if config['s3_poster_dir']:
-            if not credentials:
-                raise ValueError(
-                    'No credentials were passed.'
-                    + ' You must either pass credentials'
-                    + ' or set a field "s3_poster_dir" to null in config file'
-                )
-            self._s3_client = client(
-                's3',
-                aws_access_key_id=credentials['access_key'],
-                aws_secret_access_key=credentials['secret_access_key']
-            )
-            self._poster_dir = config['s3_poster_dir']
-        else:
-            self._poster_dir = config['poster_dir']
-
-        self._logger = create_logger(filename=config['log_file'],
-                                     msg_format=config['log_msg_format'],
-                                     dt_format=config['log_dt_format'],
-                                     level=config['log_level'])
+        self._logger = create_logger(
+            filename=config['log_file'],
+            msg_format=config['log_msg_format'],
+            dt_format=config['log_dt_format'],
+            level=config['log_level']
+        )
 
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
@@ -82,7 +65,7 @@ class MetadataCollector:
         return {
             'original_title': collect_original_title(soup),
             'genres': collect_genres(soup),
-            'poster': collect_poster(soup),
+            'poster_url': collect_poster_url(soup),
             'review_summary': collect_review_summary(soup),
             'agg_rating': collect_aggregate_rating(soup),
             'actors': collect_actors(soup),
@@ -104,25 +87,10 @@ class MetadataCollector:
                     response = send_request(title_url)
                     soup = BeautifulSoup(response.text, 'lxml')
                     details = self.collect_title_details(soup)
-                    # saving poster on disk
-                    try:
-                        id_ = title_id.replace('/title/', '')[:-1]
-                        save_img(
-                            img=details['poster'],
-                            img_name=f'{id_}.jpeg',
-                            config=self._config,
-                            s3_client=self._s3_client
-                        )
-                        self._logger.info(
-                            f'Collected metadata for title {title_id}'
-                        )
-                    except Exception as e:
-                        self._logger.warn(
-                            f'Exception in saving poster for title {title_id}'
-                            f' with message: {e}'
-                        )
-                    del details['poster']
                     self._movie_metadata[title_id] |= details
+                    self._logger.info(
+                        f'Collected metadata for title {title_id}'
+                    )
                 except Exception:
                     self._logger.warn(
                         f'Exception in parsing {title_url}'
@@ -146,23 +114,10 @@ def collect_original_title(soup: BeautifulSoup) -> Optional[str]:
         return None
 
 
-def collect_poster(soup: BeautifulSoup) -> Optional[bytes]:
-    filters = {'aria-label': 'View {Title} Poster'}
+def collect_poster_url(soup: BeautifulSoup) -> Optional[str]:
+    filters = {'data-testid': 'hero-media__poster'}
     try:
-        img_id = (
-            soup
-            .find('a', filters)
-            .get('href', None)
-            .split('?')[0]
-        )
-        inter_url = BASE_URL.format(img_id)
-        inter_response = send_request(inter_url)
-        img_download_link = (
-            BeautifulSoup(inter_response.text, 'lxml')
-            .find('img')['src']
-        )
-        response = send_request(img_download_link)
-        return response.content
+        return soup.find('div', filters).img['src']
     except Exception:
         return None
 

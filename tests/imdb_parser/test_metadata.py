@@ -24,10 +24,11 @@ def test_collect_original_title(page):
     assert orig_title == 'Red Notice'
 
 
-def test_collect_poster(page):
-    poster = metadata.collect_poster(page)
-    assert poster is not None
-    assert sys.getsizeof(poster) > 1024
+def test_collect_poster_url(page):
+    poster_url = metadata.collect_poster_url(page)
+    assert poster_url is not None
+    assert 'https://m.media-amazon.com/images/M/' in poster_url
+    assert '.jpg' in poster_url
 
 
 def test_collect_review_summary(page):
