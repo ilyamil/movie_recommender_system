@@ -1,5 +1,4 @@
 import os
-import sys
 import pytest
 from bs4 import BeautifulSoup
 from recsys.utils import send_request
@@ -48,15 +47,16 @@ def test_collect_aggregate_rating(page):
 
 def test_collect_actors(page):
     actors = metadata.collect_actors(page)
-    true_actors = ['Dwayne Johnson', 'Gal Gadot']
     assert actors is not None
-    assert all(actor in actors.keys() for actor in true_actors)
+    assert len(actors) > 0
+    assert '1' in actors
 
 
 def test_collect_imdb_recommendations(page):
     recommendations = metadata.collect_imdb_recommendations(page)
     assert recommendations is not None
     assert len(recommendations) > 0
+    assert '1' in recommendations
 
 
 def test_collect_genres(page):

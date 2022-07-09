@@ -1,0 +1,77 @@
+{
+    "original_title": "Red Notice",
+    "genres": [
+        "Action",
+        "Comedy",
+        "Thriller"
+    ],
+    "poster_url": "https://m.media-amazon.com/images/M/MV5BZmRjODgyMzEtMzIxYS00OWY2LTk4YjUtMGMzZjMzMTZiN2Q0XkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_QL75_UX190_CR0,0,190,281_.jpg",
+    "review_summary": {
+        "user_review_num": "1.8K",
+        "critic_review_num": "196",
+        "metascore": "37"
+    },
+    "agg_rating": {
+        "avg_rating": "6.3/10",
+        "num_votes": "262K"
+    },
+    "actors": {
+        "1": "/name/nm0425005",
+        "2": "/name/nm0005351",
+        "3": "/name/nm2933757",
+        "4": "/name/nm5709125",
+        "5": "/name/nm0224565",
+        "6": "/name/nm3543262",
+        "7": "/name/nm0024188",
+        "8": "/name/nm0676152",
+        "9": "/name/nm0584492",
+        "10": "/name/nm6011424"
+    },
+    "imdb_recommendations": {
+        "1": "/title/tt2463208/",
+        "2": "/title/tt6264654/",
+        "3": "/title/tt8106534/",
+        "4": "/title/tt8706598/",
+        "5": "/title/tt8672748/",
+        "6": "/title/tt1959563/",
+        "7": "/title/tt8385148/",
+        "8": "/title/tt19064676/",
+        "9": "/title/tt17017830/",
+        "10": "/title/tt11286314/",
+        "11": "/title/tt1431045/",
+        "12": "/title/tt1489889/"
+    },
+    "details": {
+        "release_date": [
+            "November 12, 2021 (Germany)"
+        ],
+        "countries_of_origin": [
+            "United States"
+        ],
+        "language": [
+            "English",
+            "Russian",
+            "Italian",
+            "Spanish",
+            "Indonesian"
+        ],
+        "also_known_as": [
+            "L\u1ec7nh Truy N\u00e3 \u0110\u1ecf"
+        ],
+        "production_companies": [
+            "Netflix",
+            "Seven Bucks Productions",
+            "Flynn Picture Company"
+        ],
+        "filming_locations": [
+            "Rome, Italy"
+        ],
+        "runtime": "1 hour 58 minutes"
+    },
+    "boxoffice": {
+        "budget": "$160,000,000 (estimated)",
+        "boxoffice_gross_domestic": null,
+        "boxoffice_gross_opening": null,
+        "boxoffice_gross_worldwide": "$178,143"
+    }
+}

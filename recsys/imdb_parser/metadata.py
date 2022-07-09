@@ -54,7 +54,7 @@ class MetadataCollector:
         """
         Collects the following details (if exists) about a single movie:
             * original title
-            * poster
+            * poster url
             * summary of reviews scores
             * average rating
             * actors starred in the movie
@@ -147,14 +147,23 @@ def collect_aggregate_rating(soup: BeautifulSoup) -> Optional[Dict[str, str]]:
         return None
 
 
-def collect_actors(soup: BeautifulSoup) -> Optional[Dict[str, str]]:
+def get_id_and_rank(s: str) -> Dict[str, Any]:
+    id_ = s.split('?')[0] if s else None
+    rank = s.split('_t_')[1] if s else None
+    return id_, rank
+
+
+def collect_actors(soup: BeautifulSoup) -> Dict[str, str]:
     filters = {'data-testid': 'title-cast-item__actor'}
     try:
         actors_raw = soup.find_all('a', filters)
-        return {actor.text: actor.get('href', None)
-                for actor in actors_raw[:TOP_N_ACTORS]}
+        actors = {}
+        for actor in actors_raw[:TOP_N_ACTORS]:
+            id_, rank = get_id_and_rank(actor.get('href', None))
+            actors[rank] = id_
+        return actors
     except Exception:
-        return None
+        return {}
 
 
 def collect_imdb_recommendations(soup: BeautifulSoup)\
@@ -162,9 +171,13 @@ def collect_imdb_recommendations(soup: BeautifulSoup)\
     filters = {'class': re.compile('ipc-poster-card__title')}
     try:
         recom_raw = soup.find_all('a', filters)
-        return [recom.get('href', None) for recom in recom_raw]
+        recommendations = {}
+        for recom in recom_raw:
+            id_, rank = get_id_and_rank(recom.get('href', None))
+            recommendations[rank] = id_
+        return recommendations
     except Exception:
-        return None
+        return {}
 
 
 def collect_genres(soup: BeautifulSoup) -> Optional[List[str]]:

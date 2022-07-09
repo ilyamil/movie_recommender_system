@@ -66,7 +66,7 @@ def load_obj(path: str, mode: str = 'rb') -> Any:
 
 def write_json(obj: Dict[Any, Any], path: str):
     dirname = os.path.dirname(path)
-    if not os.path.exists(dirname):
+    if dirname and not os.path.exists(dirname):
         raise OSError(f'Directory {dirname} does not exist')
 
     with open(path, 'w') as fp:
@@ -75,7 +75,7 @@ def write_json(obj: Dict[Any, Any], path: str):
 
 def read_json(path: str) -> Dict[Any, Any]:
     dirname = os.path.dirname(path)
-    if not os.path.exists(dirname):
+    if dirname and not os.path.exists(dirname):
         raise OSError(f'Directory {dirname} does not exist')
 
     data = None

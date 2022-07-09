@@ -2,7 +2,7 @@ id:
   metadata_file: 'data/metadata/metadata.json'
   genres: 'all'
   n_titles: null
-  pct_titles: 1
+  pct_titles: 10
   min_delay: 0.2
   max_delay: 0.3
   log_file: 'logs/imdb_parser/identifiers.log'
@@ -21,7 +21,7 @@ metadata:
   log_dt_format: '%Y-%m-%d %H:%M:%S'
 
 reviews:
-  dir: 'data/raw/reviews/1pct/'
+  metadata_file: 'data/metadata/metadata.json'
   id_dir: 'data/raw/identifiers/1pct/'
   genres: 'all'
   n_reviews: null

@@ -2,15 +2,15 @@ import os
 from argparse import ArgumentParser
 from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
+from recsys.imdb_parser.metadata import MetadataCollector
 # from recsys.imdb_parser.reviews import ReviewCollector
 # from recsys.imdb_parser.details import DetailsCollector
 
 
 ATTRIBUTES = [
     'id',
-    'details',
-    'reviews',
-    'user_reviews'
+    'metadata',
+    'reviews'
 ]
 CONFIG_FILE = os.path.join('config', 'parser_config.yaml')
 
@@ -24,8 +24,8 @@ def parse_arguments():
             Movie`s attribute to collect.
             Possible attribues: {", ".join(ATTRIBUTES)}.
             """
-            )
         )
+    )
     return parser.parse_args()
 
 
@@ -35,22 +35,17 @@ def main():
     if arguments.attribute == 'id':
         collector = IDCollector(config['id'])
         collector.collect()
+    elif arguments.attribute == 'metadata':
+        collector = MetadataCollector(config['metadata'])
+        collector.collect()
     # elif arguments.attribute == 'reviews':
     #     collector = ReviewCollector(config['data_collection']['reviews'],
     #                                 config['logger'])
     #     collector.collect()
-    # elif arguments.attribute == 'details':
-    #     collector = DetailsCollector(config['data_collection']['details'],
-    #                                  config['logger'])
-    #     collector.collect()
-    # elif arguments.attribute == 'user_reviews':
-    #     # collector = UserReviewsCollector()
-    #     # collector.collect_other_reviews()
-    #     print(4)
-    # else:
-    #     raise ValueError(
-    #         f'possible values for --attribute: {", ".join(ATTRIBUTES)}'
-    #     )
+    else:
+        raise ValueError(
+            f'possible values for --attribute: {", ".join(ATTRIBUTES)}'
+        )
 
 
 if __name__ == '__main__':

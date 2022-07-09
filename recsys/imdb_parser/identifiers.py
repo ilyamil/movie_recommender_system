@@ -1,9 +1,10 @@
+import os
 import re
 from typing import Dict, Any
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from recsys.utils import (get_full_path, wait, send_request,
-                          create_logger, write_json)
+                          create_logger, write_json, read_json)
 
 
 BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
@@ -54,11 +55,11 @@ class IDCollector:
         The following fields must be set in config file:
             1. dir - a directory to save identifiers.
             2. log_file - a file to write all logs while collecting IDs
-            3. genres - genres of movies to collect.
+            3. genres - movie genres to collect.
                 All possible genres can be found there
                 https://www.imdb.com/feature/genre/?ref_=nv_ch_gr
                 under "Popular Movies by Genre" title.
-            4. n_titles - number of movies' identifiers to collect in
+            4. n_titles - number of movie identifiers to collect in
                 a specified genre.
             5. pct_titles - percent of total movies available to collect
                 in a specified genre.
@@ -73,17 +74,19 @@ class IDCollector:
             on IMDB server which is not totally ethical and could lead to
             blocking of our requests. This trade-off is up to you.
         """
-        self._metadata_file = config['metadata_file']
+        self._metadata_file_path = get_full_path(config['metadata_file'])
         self._genres = config['genres']
         self._min_delay = config['min_delay']
         self._max_delay = config['max_delay']
         n_titles = config['n_titles']
         pct_titles = config['pct_titles']
 
-        self._logger = create_logger(filename=config['log_file'],
-                                     msg_format=config['log_msg_format'],
-                                     dt_format=config['log_dt_format'],
-                                     level=config['log_level'])
+        self._logger = create_logger(
+            filename=config['log_file'],
+            msg_format=config['log_msg_format'],
+            dt_format=config['log_dt_format'],
+            level=config['log_level']
+        )
 
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
@@ -182,7 +185,12 @@ class IDCollector:
         them on a disk.
         """
         print('Collecting identifiers...')
-        id_genre = {}
+
+        if os.path.isfile(self._metadata_file_path):
+            id_genre = read_json(self._metadata_file_path)
+        else:
+            id_genre = {}
+
         for genre in self._genres:
             old_len = len(id_genre)
             id_genre |= self._collect_ids_for_genre(genre)
@@ -193,8 +201,7 @@ class IDCollector:
 
             wait(self._min_delay, self._max_delay)
 
-        filepath = get_full_path(self._metadata_file)
-        write_json(id_genre, filepath)
+        write_json(id_genre, self._metadata_file_path)
 
 
 def extract_main_genre(s: str) -> str:
