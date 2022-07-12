@@ -1,10 +1,10 @@
-import os
 import re
+from time import sleep
 from typing import Dict, Any
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-from recsys.utils import (get_full_path, wait, send_request,
-                          create_logger, write_json, read_json)
+from pandas import DataFrame
+from recsys.utils import send_request, create_logger
 
 
 BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
@@ -48,7 +48,7 @@ class IDCollector:
     Public method:
         collect: parses pages and saves IDs on a disk.
     """
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
         """
         Initializes collector class. All parameters related to collection
         of movie identifiers set up here using config.
@@ -74,12 +74,16 @@ class IDCollector:
             on IMDB server which is not totally ethical and could lead to
             blocking of our requests. This trade-off is up to you.
         """
-        self._metadata_file_path = get_full_path(config['metadata_file'])
+        self._metadata_file = config['metadata_file']
         self._genres = config['genres']
-        self._min_delay = config['min_delay']
-        self._max_delay = config['max_delay']
+        self._sleep_time = config['sleep_time']
         n_titles = config['n_titles']
         pct_titles = config['pct_titles']
+
+        self._storage_options = {
+            'key': credentials['access_key'],
+            'secret': credentials['secret_access_key']
+        }
 
         self._logger = create_logger(
             filename=config['log_file'],
@@ -175,7 +179,7 @@ class IDCollector:
         for rank in tqdm(**tqdm_params):
             genre_id |= self._collect_rank_id(genre, rank)
 
-            wait(self._min_delay, self._max_delay)
+            sleep(self._sleep_time)
 
         return genre_id
 
@@ -186,10 +190,7 @@ class IDCollector:
         """
         print('Collecting identifiers...')
 
-        if os.path.isfile(self._metadata_file_path):
-            id_genre = read_json(self._metadata_file_path)
-        else:
-            id_genre = {}
+        id_genre = {}
 
         for genre in self._genres:
             old_len = len(id_genre)
@@ -199,9 +200,12 @@ class IDCollector:
                 f'Collected {len(id_genre) - old_len} new identifiers'
             )
 
-            wait(self._min_delay, self._max_delay)
+            sleep(self._sleep_time)
 
-        write_json(id_genre, self._metadata_file_path)
+        DataFrame.from_dict(id_genre, orient='index').to_json(
+            self._metadata_file,
+            storage_options=self._storage_options
+        )
 
 
 def extract_main_genre(s: str) -> str:

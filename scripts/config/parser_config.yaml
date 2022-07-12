@@ -1,20 +1,19 @@
 id:
-  metadata_file: 'data/metadata/metadata.json'
-  genres: 'all'
+  metadata_file: 's3://movie-on-friday/metadata/metadata.json'
+  genres: ['sci-fi']
   n_titles: null
-  pct_titles: 10
-  min_delay: 0.2
-  max_delay: 0.3
+  pct_titles: 1
+  sleep_time: 0.2
   log_file: 'logs/imdb_parser/identifiers.log'
   log_level: 'INFO'
   log_msg_format: '%(asctime)s %(levelname)s %(message)s'
   log_dt_format: '%Y-%m-%d %H:%M:%S'
 
 metadata:
-  metadata_file: 'data/metadata/metadata.json'
-  genres: 'all'
-  min_delay: 0.1
-  max_delay: 0.2
+  metadata_file: 's3://movie-on-friday/metadata/metadata.json'
+  genres: ['action']
+  chunk_size: 100
+  sleep_time: 0.2
   log_file: 'logs/imdb_parser/details.log'
   log_level: 'INFO'
   log_msg_format: '%(asctime)s %(levelname)s %(message)s'
@@ -26,8 +25,7 @@ reviews:
   genres: 'all'
   n_reviews: null
   pct_reviews: 10
-  min_delay: 0.1
-  max_delay: 0.2
+  sleep_time: 0.2
   log_file: 'logs/imdb_parser/reviews.log'
   log_level: 'INFO'
   log_msg_format: '%(asctime)s %(levelname)s %(message)s'

@@ -12,7 +12,8 @@ ATTRIBUTES = [
     'metadata',
     'reviews'
 ]
-CONFIG_FILE = os.path.join('config', 'parser_config.yaml')
+PARSER_CONFIG = os.path.join('config', 'parser_config.yaml')
+CREDEENTIALS = os.path.join('config', 'credentials.yaml')
 
 
 def parse_arguments():
@@ -31,12 +32,14 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
-    config = parse_config(CONFIG_FILE)
+    config = parse_config(PARSER_CONFIG)
+    credentials = parse_config(CREDEENTIALS)
+
     if arguments.attribute == 'id':
-        collector = IDCollector(config['id'])
+        collector = IDCollector(config['id'], credentials['aws'])
         collector.collect()
     elif arguments.attribute == 'metadata':
-        collector = MetadataCollector(config['metadata'])
+        collector = MetadataCollector(config['metadata'], credentials['aws'])
         collector.collect()
     # elif arguments.attribute == 'reviews':
     #     collector = ReviewCollector(config['data_collection']['reviews'],

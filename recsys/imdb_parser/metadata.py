@@ -1,23 +1,29 @@
 import re
+from time import sleep
 from typing import Optional, Dict, List, Any, Union
+from pandas import DataFrame, read_json
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from recsys.utils import (send_request, create_logger, read_json, write_json,
-                          get_full_path, wait)
+from recsys.utils import send_request, create_logger
 
 
-BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
+BAR_FORMAT = '{percentage:3.0f}%|{bar:20}{r_bar}'
 BASE_URL = 'https://www.imdb.com{}'
 TOP_N_ACTORS = 10
+BATCH_SIZE = 50
 
 
 class MetadataCollector:
-    def __init__(self, config: Dict[str, Any]):
-        self._config = config
+    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
         self._metadata_file = config['metadata_file']
         self._genres = config['genres']
-        self._min_delay = config['min_delay']
-        self._max_delay = config['max_delay']
+        self._chunk_size = config['chunk_size']
+        self._sleep_time = config['sleep_time']
+
+        self._storage_options = {
+            'key': credentials['access_key'],
+            'secret': credentials['secret_access_key']
+        }
 
         self._logger = create_logger(
             filename=config['log_file'],
@@ -29,10 +35,15 @@ class MetadataCollector:
         if not isinstance(self._genres, list):
             self._genres = [self._genres]
 
-        self._movie_metadata = read_json(get_full_path(self._metadata_file))
+        self._genres = [genre.lower() for genre in self._genres]
+
+        movie_metadata = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options
+        )
         available_genres = {
-            item['main_genre']
-            for item in self._movie_metadata.values()
+            item['main_genre'].lower()
+            for item in movie_metadata.T.to_dict().values()
         }
         if 'all' not in self._genres:
             use_genres = set(self._genres).intersection(available_genres)
@@ -47,7 +58,7 @@ class MetadataCollector:
         else:
             self._genres = available_genres
 
-        self._logger.info('Successfully initialized DetailsCollector')
+        self._logger.info('Successfully initialized MetadataCollector')
 
     @staticmethod
     def collect_title_details(soup: BeautifulSoup) -> Dict[str, Any]:
@@ -75,35 +86,57 @@ class MetadataCollector:
         }
 
     def collect(self) -> None:
-        print('Collecting details...')
-        for genre in self._genres:
-            title_ids = [
-                t for t, v in self._movie_metadata.items()
-                if v['main_genre'] == genre
-            ]
-            for title_id in tqdm(title_ids, genre, bar_format=BAR_FORMAT):
-                title_url = BASE_URL.format(title_id)
-                try:
-                    response = send_request(title_url)
-                    soup = BeautifulSoup(response.text, 'lxml')
-                    details = self.collect_title_details(soup)
-                    self._movie_metadata[title_id] |= details
-                    self._logger.info(
-                        f'Collected metadata for title {title_id}'
-                    )
-                except Exception:
-                    self._logger.warn(
-                        f'Exception in parsing {title_url}'
-                    )
+        print('Collecting metadata...')
 
-                wait(self._min_delay, self._max_delay)
+        movie_metadata_df = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options
+        )
+        movie_metadata = movie_metadata_df.T.to_dict()
 
-            filepath = get_full_path(self._metadata_file)
-            write_json(self._movie_metadata, filepath)
+        title_ids = [t for t, _ in movie_metadata.items()]
+        counter = 0
+        total_counter = 0
+        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT):
+            if movie_metadata[title_id].get('original_title', None):
+                continue
 
-            self._logger.info(
-                f'Collected metadata for all titles in genre {genre}'
-            )
+            url = BASE_URL.format(title_id)
+            try:
+                title_page = send_request(url)
+                soup = BeautifulSoup(title_page.text, 'lxml')
+
+                details = self.collect_title_details(soup)
+                movie_metadata[title_id] |= details
+
+                counter += 1
+
+                self._logger.info(f'Collected metadata for title {title_id}')
+            except Exception as e:
+                self._logger.warn(f'Exception {str(e)} in parsing {url}')
+            finally:
+                sleep(self._sleep_time)
+
+            # save results after if we have enough new data
+            if counter == BATCH_SIZE:
+                total_counter += counter
+                counter = 0
+
+                DataFrame(movie_metadata).to_json(
+                    self._metadata_file,
+                    storage_options=self._storage_options
+                )
+
+                self._logger.info(
+                    f'Updated metadata file with {BATCH_SIZE} titles'
+                )
+
+                # stop program if we scraped many pages. This could be useful
+                # if we have a limit on total running time (e.g. using
+                # AWS Lambda)
+                if total_counter >= self._chunk_size:
+                    self._logger.info('Stop parsing due to limit')
+                    return
 
 
 def collect_original_title(soup: BeautifulSoup) -> Optional[str]:

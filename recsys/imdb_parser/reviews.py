@@ -157,9 +157,9 @@ class ReviewCollector:
                 # imitate clicking load-more button
                 try:
                     pagination_key = (
-                            soup
-                            .select_one(".load-more-data[data-key]")
-                            .get("data-key")
+                        soup
+                        .select_one(".load-more-data[data-key]")
+                        .get("data-key")
                     )
                 except AttributeError:
                     load_another_reviews = False
