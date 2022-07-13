@@ -92,8 +92,11 @@ class MetadataCollector:
             storage_options=self._storage_options,
             orient='index'
         )
-        already_collected = (~metadata_df['genres'].isna()).sum()
-        total_movies = metadata_df['genres'].isna().sum()
+        if 'genres' not in metadata_df.columns:
+            already_collected = 0
+        else:
+            already_collected = (~metadata_df['genres'].isna()).sum()
+        total_movies = len(metadata_df['genres'])
 
         print(
             f'Movie metadata is already collected for {already_collected}'
