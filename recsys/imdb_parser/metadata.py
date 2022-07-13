@@ -39,7 +39,8 @@ class MetadataCollector:
 
         movie_metadata = read_json(
             self._metadata_file,
-            storage_options=self._storage_options
+            storage_options=self._storage_options,
+            orient='index'
         )
         available_genres = {
             item['main_genre'].lower()
@@ -85,12 +86,28 @@ class MetadataCollector:
             'boxoffice': collect_boxoffice(soup)
         }
 
+    def is_all_metadata_collected(self) -> bool:
+        metadata_df = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        already_collected = (~metadata_df['genres'].isna()).sum()
+        total_movies = metadata_df['genres'].isna().sum()
+
+        print(
+            f'Movie metadata is already collected for {already_collected}'
+            + f' out of {total_movies} titles'
+        )
+        return already_collected == total_movies
+
     def collect(self) -> None:
         print('Collecting metadata...')
 
         movie_metadata_df = read_json(
             self._metadata_file,
-            storage_options=self._storage_options
+            storage_options=self._storage_options,
+            orient='index'
         )
         movie_metadata = movie_metadata_df.T.to_dict()
 

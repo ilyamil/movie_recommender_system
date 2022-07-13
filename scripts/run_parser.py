@@ -1,10 +1,10 @@
 import os
+import time
 from argparse import ArgumentParser
 from recsys.utils import parse_config
 from recsys.imdb_parser.identifiers import IDCollector
 from recsys.imdb_parser.metadata import MetadataCollector
 # from recsys.imdb_parser.reviews import ReviewCollector
-# from recsys.imdb_parser.details import DetailsCollector
 
 
 ATTRIBUTES = [
@@ -14,6 +14,7 @@ ATTRIBUTES = [
 ]
 PARSER_CONFIG = os.path.join('config', 'parser_config.yaml')
 CREDEENTIALS = os.path.join('config', 'credentials.yaml')
+TIMEOUT = 10
 
 
 def parse_arguments():
@@ -30,17 +31,16 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def main():
-    arguments = parse_arguments()
-    config = parse_config(PARSER_CONFIG)
-    credentials = parse_config(CREDEENTIALS)
-
+def run_parser(arguments, config, credentials):
     if arguments.attribute == 'id':
         collector = IDCollector(config['id'], credentials['aws'])
         collector.collect()
     elif arguments.attribute == 'metadata':
         collector = MetadataCollector(config['metadata'], credentials['aws'])
-        collector.collect()
+        while not collector.is_all_metadata_collected():
+            collector.collect()
+            print(f'Timeout for {TIMEOUT} seconds\n')
+            time.sleep(TIMEOUT)
     # elif arguments.attribute == 'reviews':
     #     collector = ReviewCollector(config['data_collection']['reviews'],
     #                                 config['logger'])
@@ -52,4 +52,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_parser(
+        parse_arguments(),
+        parse_config(PARSER_CONFIG),
+        parse_config(CREDEENTIALS)
+    )

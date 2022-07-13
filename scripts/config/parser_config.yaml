@@ -1,8 +1,8 @@
 id:
   metadata_file: 's3://movie-on-friday/metadata/metadata.json'
-  genres: ['sci-fi']
+  genres: 'all'
   n_titles: null
-  pct_titles: 1
+  pct_titles: 10
   sleep_time: 0.2
   log_file: 'logs/imdb_parser/identifiers.log'
   log_level: 'INFO'
@@ -24,7 +24,7 @@ reviews:
   id_dir: 'data/raw/identifiers/1pct/'
   genres: 'all'
   n_reviews: null
-  pct_reviews: 10
+  pct_reviews: 100
   sleep_time: 0.2
   log_file: 'logs/imdb_parser/reviews.log'
   log_level: 'INFO'
