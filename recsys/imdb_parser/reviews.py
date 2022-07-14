@@ -218,7 +218,7 @@ class ReviewCollector:
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
         for title_id in tqdm(title_ids, bar_format=BAR_FORMAT):
-            if movie_metadata[title_id]['already_collected_flg']:
+            if movie_metadata[title_id]['reviews_collected_flg']:
                 continue
 
             title_reviews = self.collect_title_reviews(title_id)
@@ -241,7 +241,7 @@ class ReviewCollector:
 
                 # Update status on each iteration, because it takes a long
                 # time to parse reviews even for a single title.
-                movie_metadata[title_id]['already_collected_flg'] = 1
+                movie_metadata[title_id]['reviews_collected_flg'] = 1
                 DataFrame(movie_metadata).to_json(
                     self._metadata_file,
                     storage_options=self._storage_options

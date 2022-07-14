@@ -52,8 +52,7 @@ def run_parser(arguments, config, credentials):
             time.sleep(TIMEOUT)
     elif arguments.attribute == 'reviews':
         collector = ReviewCollector(config['reviews'], credentials['aws'])
-        while check_health_status(URL_FOR_HEALTH_CHECK)\
-                & (not collector.is_all_reviews_collected()):
+        while not collector.is_all_reviews_collected():
             if not check_health_status(URL_FOR_HEALTH_CHECK):
                 print('Stop parsing. Recieved 4xx or 5xx status code')
                 break
