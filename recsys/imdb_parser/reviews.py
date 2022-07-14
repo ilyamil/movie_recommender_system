@@ -204,7 +204,7 @@ class ReviewCollector:
         )
         return total_movies == already_collected
 
-    def collect(self) -> None:
+    def collect(self) -> bool:
         print('Collecting reviews...')
 
         movie_metadata_df = read_json(
@@ -267,7 +267,9 @@ class ReviewCollector:
 
             if counter == self._chunk_size:
                 self._logger.info('Stop parsing due to requests limit')
-                return
+                return True
+
+        return True
 
 
 def collect_date(tag: Tag) -> Optional[str]:
