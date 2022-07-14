@@ -1,3 +1,4 @@
+import os
 import re
 from time import sleep
 from typing import Optional, Dict, List, Any, Union
@@ -15,7 +16,10 @@ BATCH_SIZE = 50
 
 class MetadataCollector:
     def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
-        self._metadata_file = config['metadata_file']
+        self._bucket = config['bucket']
+        self._metadata_file = os.path.join(
+            's3://', self._bucket, config['metadata_file']
+        )
         self._genres = config['genres']
         self._chunk_size = config['chunk_size']
         self._sleep_time = config['sleep_time']
@@ -102,7 +106,7 @@ class MetadataCollector:
             f'Movie metadata is already collected for {already_collected}'
             + f' out of {total_movies} titles'
         )
-        return already_collected == total_movies
+        return total_movies - already_collected < BATCH_SIZE
 
     def collect(self) -> None:
         print('Collecting metadata...')
@@ -116,8 +120,11 @@ class MetadataCollector:
 
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
-        total_counter = 0
-        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT):
+        session_counter = 0
+        iter_wrapper = tqdm(
+            enumerate(title_ids), total=len(title_ids), bar_format=BAR_FORMAT
+        )
+        for i, title_id in iter_wrapper:
             if movie_metadata[title_id].get('original_title', None):
                 continue
 
@@ -138,10 +145,11 @@ class MetadataCollector:
                 sleep(self._sleep_time)
 
             # save results after if we have enough new data
-            if counter == BATCH_SIZE:
-                total_counter += counter
+            if (counter == BATCH_SIZE) | (i == len(title_id)):
+                session_counter += counter
                 counter = 0
 
+                # update metadata file
                 DataFrame(movie_metadata).to_json(
                     self._metadata_file,
                     storage_options=self._storage_options
@@ -154,8 +162,8 @@ class MetadataCollector:
                 # stop program if we scraped many pages. This could be useful
                 # if we have a limit on total running time (e.g. using
                 # AWS Lambda)
-                if total_counter >= self._chunk_size:
-                    self._logger.info('Stop parsing due to limit')
+                if session_counter >= self._chunk_size:
+                    self._logger.info('Stop parsing due to requests limit')
                     return
 
 

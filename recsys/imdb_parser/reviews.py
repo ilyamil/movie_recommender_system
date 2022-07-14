@@ -1,18 +1,19 @@
 import os
 import warnings
 import requests
+from time import sleep
 from typing import List, Dict, Any, Optional
+from pandas import DataFrame, read_json
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from recsys.utils import (wait, send_request,
-                          create_logger, load_obj,
-                          get_full_path, write_csv)
+from recsys.imdb_parser.metadata import BATCH_SIZE
+from recsys.utils import send_request, create_logger
 
 warnings.filterwarnings('ignore')
 
 
-BAR_FORMAT = '{desc:<20} {percentage:3.0f}%|{bar:20}{r_bar}'
+BAR_FORMAT = '{percentage:3.0f}%|{bar:20}{r_bar}'
 COLUMNS = [
     'title_id',
     'text',
@@ -38,37 +39,40 @@ LINK_URL_TEMPLATE = (
 
 
 class ReviewCollector:
-    def __init__(self, collector_config: Dict[str, Any],
-                 logger_config: Dict[str, Any]) -> None:
-        log_file = collector_config['log_file']
-        self._logger = create_logger(logger_config, log_file)
-        self._save_dir = collector_config['dir']
-        self._id_dir = collector_config['id_dir']
-        self._genres = collector_config['genres']
-        self._n_reviews = collector_config['n_reviews']
-        self._pct_reviews = collector_config['pct_reviews']
-        self._min_delay = collector_config['request_delay']['min_delay']
-        self._max_delay = collector_config['request_delay']['max_delay']
+    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
+        self._bucket = config['bucket']
+        self._review_folder = config['review_folder']
+        self._n_reviews = config['n_reviews']
+        self._pct_reviews = config['pct_reviews']
+        self._sleep_time = config['sleep_time']
 
-        if not isinstance(self._genres, list):
-            self._genres = [self._genres]
+        self._logger = create_logger(
+            filename=config['log_file'],
+            msg_format=config['log_msg_format'],
+            dt_format=config['log_dt_format'],
+            level=config['log_level']
+        )
 
-        available_genres = [
-            genre.split('.')[0]
-            for genre in os.listdir(get_full_path(self._id_dir))
-        ]
-        if 'all' not in self._genres:
-            use_genres = set(self._genres).intersection(available_genres)
-            genre_diff = set(self._genres) - set(use_genres)
-            if genre_diff:
-                self._logger.warning(
-                    f'No {", ".join(genre_diff)} in possible genres'
-                )
-            if not use_genres:
-                raise ValueError('No valid genres were passed')
-            self._genres = use_genres
-        else:
-            self._genres = available_genres
+        self._storage_options = {
+            'key': credentials['access_key'],
+            'secret': credentials['secret_access_key']
+        }
+
+        self._metadata_file = os.path.join(
+            's3://', self._bucket, config['metadata_file']
+        )
+        metadata = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        if 'reviews_collected_flg' not in metadata.columns:
+            metadata['reviews_collected_flg'] = 0
+            metadata.to_json(
+                self._metadata_file,
+                storage_options=self._storage_options,
+                orient='index'
+            )
 
         if not (self._pct_reviews or self._n_reviews):
             raise ValueError(
@@ -137,7 +141,7 @@ class ReviewCollector:
             title_reviews = []
             load_another_reviews = True
             while load_another_reviews:
-                wait(self._min_delay, self._max_delay)
+                sleep(self._sleep_time)
 
                 reviews_batch = []
                 soup = BeautifulSoup(res.text, 'lxml')
@@ -174,28 +178,96 @@ class ReviewCollector:
                         f' with message: {e}'
                     )
 
+                print(len(title_reviews))
+
         self._logger.info(
             f'Total collected {len(title_reviews)} reviews for title ID {id_}'
         )
         return title_reviews
 
+    def is_all_reviews_collected(self) -> bool:
+        """
+        Checks if reviews were collected for all available titles.
+        """
+        # As status file has only one column it must be read in columnar
+        # orientation
+        metadata = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        already_collected = metadata['reviews_collected_flg'].sum()
+        total_movies = len(metadata)
+
+        print(
+            f'Movie reviews are already collected for {already_collected}'
+            + f' out of {total_movies} titles'
+        )
+        return total_movies - already_collected < BATCH_SIZE
+
     def collect(self) -> None:
         print('Collecting reviews...')
-        for genre in self._genres:
-            genre_reviews = []
-            genre_id_path = get_full_path(self._id_dir, f'{genre}.pkl')
-            genre_id = load_obj(genre_id_path)
-            for title_id in tqdm(genre_id, desc=genre, bar_format=BAR_FORMAT):
-                title_reviews = self.collect_title_reviews(title_id)
-                genre_reviews.extend(title_reviews)
 
-            save_path = get_full_path(self._save_dir, f'{genre}.csv')
-            write_csv(genre_reviews, save_path)
+        movie_metadata_df = read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        movie_metadata = movie_metadata_df.T.to_dict()
 
-            self._logger.info(
-                f'Total collected {len(genre_reviews)} reviews'
-                f' in genre {genre.upper()}'
+        title_ids = [t for t, _ in movie_metadata.items()]
+        counter = 0
+        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT):
+            if movie_metadata[title_id]['already_collected_flg']:
+                continue
+
+            title_reviews = self.collect_title_reviews(title_id)
+
+            # This line extracts pure title id from raw form
+            # e.g. '/title/tt0468569/' -> 'tt0468569'
+            title_id_ = title_id.split('/')[-2]
+            title_path = os.path.join(
+                's3://',
+                self._bucket,
+                self._review_folder,
+                title_id_ + '.csv'
             )
+            try:
+                DataFrame.from_records(title_reviews).to_csv(
+                    title_path,
+                    storage_options=self._storage_options
+                )
+
+                # Update status on each iteration, because it takes a long
+                # time to parse reviews even for a single title.
+                movie_metadata[title_id]['already_collected_flg'] = 1
+                DataFrame(movie_metadata).to_json(
+                    self._metadata_file,
+                    storage_options=self._storage_options
+                )
+
+                movie_metadata_df = read_json(
+                    self._metadata_file,
+                    storage_options=self._storage_options,
+                    orient='index'
+                )
+                movie_metadata = movie_metadata_df.T.to_dict()
+
+                counter += 1
+
+                self._logger.info(
+                    f'Collected {len(title_reviews)} reviews'
+                    + f' about title {title_id_}'
+                )
+            except Exception as e:
+                self._logger.warn(
+                    f'Exception {str(e)} while collecting reviews'
+                    + f' about title {title_id_}'
+                )
+
+            if counter == self._chunk_size:
+                self._logger.info('Stop parsing due to requests limit')
+                return
 
 
 def collect_date(tag: Tag) -> Optional[str]:

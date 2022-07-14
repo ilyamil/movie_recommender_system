@@ -5,8 +5,9 @@ from recsys.utils import load_obj
 from recsys.imdb_parser.reviews import ReviewCollector
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-REVIEW_TAG_PATH = os.path.join(FILE_DIR, '..', 'data',
-                               'review_tag_example.pkl')
+REVIEW_TAG_PATH = os.path.join(
+    FILE_DIR, '..', 'data', 'review_tag_example.pkl'
+)
 REVIEW_ID = '/title/tt0068646/'
 
 

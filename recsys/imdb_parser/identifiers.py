@@ -1,3 +1,4 @@
+import os
 import re
 from time import sleep
 from typing import Dict, Any
@@ -74,7 +75,10 @@ class IDCollector:
             on IMDB server which is not totally ethical and could lead to
             blocking of our requests. This trade-off is up to you.
         """
-        self._metadata_file = config['metadata_file']
+        self._bucket = config['bucket']
+        self._metadata_file = os.path.join(
+            's3://', self._bucket, config['metadata_file']
+        )
         self._genres = config['genres']
         self._sleep_time = config['sleep_time']
         n_titles = config['n_titles']
