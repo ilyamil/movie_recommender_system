@@ -7,7 +7,6 @@ from pandas import DataFrame, read_json
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from recsys.imdb_parser.metadata import BATCH_SIZE
 from recsys.utils import send_request, create_logger
 
 warnings.filterwarnings('ignore')
@@ -43,6 +42,7 @@ class ReviewCollector:
         self._bucket = config['bucket']
         self._review_folder = config['review_folder']
         self._n_reviews = config['n_reviews']
+        self._chunk_size = config['chunk_size']
         self._pct_reviews = config['pct_reviews']
         self._sleep_time = config['sleep_time']
 

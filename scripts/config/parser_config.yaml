@@ -26,7 +26,8 @@ reviews:
   metadata_file: 'metadata/metadata.json'
   review_folder: 'reviews'
   n_reviews: null
-  pct_reviews: 200
+  chunk_size: 100
+  pct_reviews: 100
   sleep_time: 0.1
   log_file: 'logs/imdb_parser/reviews.log'
   log_level: 'INFO'
