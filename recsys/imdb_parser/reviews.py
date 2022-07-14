@@ -168,17 +168,16 @@ class ReviewCollector:
                 except AttributeError:
                     load_another_reviews = False
 
-                link_url = LINK_URL_TEMPLATE.format(id_)
-                request_params['params']['paginationKey'] = pagination_key
-                try:
-                    res = send_request(link_url, **request_params)
-                except Exception as e:
-                    self._logger.warn(
-                        f'Exception of sending link requests to ID {id_}'
-                        f' with message: {e}'
-                    )
-
-                print(len(title_reviews))
+                if load_another_reviews:
+                    link_url = LINK_URL_TEMPLATE.format(id_)
+                    request_params['params']['paginationKey'] = pagination_key
+                    try:
+                        res = send_request(link_url, **request_params)
+                    except Exception as e:
+                        self._logger.warn(
+                            f'Exception of sending link requests to ID {id_}'
+                            f' with message: {e}'
+                        )
 
         self._logger.info(
             f'Total collected {len(title_reviews)} reviews for title ID {id_}'
