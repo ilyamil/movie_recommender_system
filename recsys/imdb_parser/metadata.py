@@ -145,7 +145,7 @@ class MetadataCollector:
                 sleep(self._sleep_time)
 
             # save results after if we have enough new data
-            if (counter == BATCH_SIZE) | (i == len(title_id) - 1):
+            if (counter == BATCH_SIZE) | (i == len(title_ids) - 1):
                 session_counter += counter
                 counter = 0
 
