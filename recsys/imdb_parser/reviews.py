@@ -233,10 +233,11 @@ class ReviewCollector:
                 title_id_ + '.csv'
             )
             try:
-                DataFrame.from_records(title_reviews).to_csv(
-                    title_path,
-                    storage_options=self._storage_options
-                )
+                if len(title_reviews) > 0:
+                    DataFrame.from_records(title_reviews).to_csv(
+                        title_path,
+                        storage_options=self._storage_options
+                    )
 
                 # Update status on each iteration, because it takes a long
                 # time to parse reviews even for a single title.
