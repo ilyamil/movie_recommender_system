@@ -106,7 +106,7 @@ class MetadataCollector:
             f'Movie metadata is already collected for {already_collected}'
             + f' out of {total_movies} titles'
         )
-        return total_movies - already_collected < BATCH_SIZE
+        return total_movies == already_collected
 
     def collect(self) -> None:
         print('Collecting metadata...')
