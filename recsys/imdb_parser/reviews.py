@@ -37,9 +37,6 @@ LINK_URL_TEMPLATE = (
 )
 
 
-import psutil
-
-
 class ReviewCollector:
     def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
         self._bucket = config['bucket']
@@ -181,8 +178,6 @@ class ReviewCollector:
                             f' with message: {e}'
                         )
 
-                memusg = psutil.Process().memory_info().rss / (1024 * 1024)
-                print(f'Collecting reviews for title {id_}. Current memory_usage {memusg:.2f} mb.')
         self._logger.info(
             f'Total collected {len(title_reviews)} reviews for title ID {id_}'
         )
@@ -223,9 +218,6 @@ class ReviewCollector:
         for title_id in tqdm(title_ids, bar_format=BAR_FORMAT, disable=True):
             if movie_metadata[title_id]['reviews_collected_flg']:
                 continue
-
-            memusg = psutil.Process().memory_info().rss / (1024 * 1024)
-            print(f'Starting parsing {title_id}. Current memory_usage {memusg:.2f} mb.')
 
             title_reviews = self.collect_title_reviews(title_id)
 
@@ -274,9 +266,7 @@ class ReviewCollector:
 
             if counter == self._chunk_size:
                 self._logger.info('Stop parsing due to requests limit')
-                return True
-
-        return True
+                return
 
 
 def collect_date(tag: Tag) -> Optional[str]:

@@ -51,24 +51,16 @@ def run_parser(arguments, config, credentials):
             print(f'Timeout for {TIMEOUT} seconds\n')
             time.sleep(TIMEOUT)
     elif arguments.attribute == 'reviews':
-        import psutil
         collector = ReviewCollector(config['reviews'], credentials['aws'])
-        print('Initial memory usage: ',
-                psutil.Process().memory_info().rss / (1024 * 1024))
-        i = 0
         while not collector.is_all_reviews_collected():
             if not check_health_status(URL_FOR_HEALTH_CHECK):
                 print('Stop parsing. Recieved 4xx or 5xx status code')
                 break
 
-            _ = collector.collect()
-            print(f'Memory usage on {i}-th iteration',
-                    psutil.Process().memory_info().rss / (1024 * 1024))
-            i += 1
+            collector.collect()
+
             print(f'Timeout for {TIMEOUT} seconds\n')
             time.sleep(TIMEOUT)
-
-            collector = ReviewCollector(config['reviews'], credentials['aws'])
     else:
         raise ValueError(
             f'possible values for --attribute: {", ".join(ATTRIBUTES)}'
