@@ -37,6 +37,9 @@ LINK_URL_TEMPLATE = (
 )
 
 
+import psutil
+
+
 class ReviewCollector:
     def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
         self._bucket = config['bucket']
@@ -216,6 +219,8 @@ class ReviewCollector:
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
         for title_id in tqdm(title_ids, bar_format=BAR_FORMAT, disable=True):
+            memusg = psutil.Process().memory_info().rss / (1024 * 1024)
+            print(f'Starting parsing {title_id}. Current memory_usage {memusg:.2f} mb.')
             if movie_metadata[title_id]['reviews_collected_flg']:
                 continue
 
