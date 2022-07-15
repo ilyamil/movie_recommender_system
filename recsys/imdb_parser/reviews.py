@@ -61,19 +61,18 @@ class ReviewCollector:
         self._metadata_file = os.path.join(
             's3://', self._bucket, config['metadata_file']
         )
-        metadata = read_json(
+        self._metadata = read_json(
             self._metadata_file,
             storage_options=self._storage_options,
             orient='index'
         )
-        if 'reviews_collected_flg' not in metadata.columns:
-            metadata['reviews_collected_flg'] = 0
-            metadata.to_json(
+        if 'reviews_collected_flg' not in self._metadata.columns:
+            self._metadata['reviews_collected_flg'] = 0
+            self._metadata.to_json(
                 self._metadata_file,
                 storage_options=self._storage_options,
                 orient='index'
             )
-
         if not (self._pct_reviews or self._n_reviews):
             raise ValueError(
                 'Only one of these arguments needs to be set'
@@ -207,16 +206,16 @@ class ReviewCollector:
     def collect(self) -> bool:
         print('Collecting reviews...')
 
-        movie_metadata_df = read_json(
+        self._movie_metadata_df = read_json(
             self._metadata_file,
             storage_options=self._storage_options,
             orient='index'
         )
-        movie_metadata = movie_metadata_df.T.to_dict()
+        movie_metadata = self._movie_metadata_df.T.to_dict()
 
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
-        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT):
+        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT, disable=True):
             if movie_metadata[title_id]['reviews_collected_flg']:
                 continue
 
@@ -246,12 +245,12 @@ class ReviewCollector:
                     storage_options=self._storage_options
                 )
 
-                movie_metadata_df = read_json(
+                self._movie_metadata_df = read_json(
                     self._metadata_file,
                     storage_options=self._storage_options,
                     orient='index'
                 )
-                movie_metadata = movie_metadata_df.T.to_dict()
+                movie_metadata = self._movie_metadata_df.T.to_dict()
 
                 counter += 1
 
