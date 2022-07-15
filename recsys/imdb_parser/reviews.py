@@ -181,6 +181,8 @@ class ReviewCollector:
                             f' with message: {e}'
                         )
 
+                memusg = psutil.Process().memory_info().rss / (1024 * 1024)
+                print(f'Collecting reviews for title {title_id}. Current memory_usage {memusg:.2f} mb.')
         self._logger.info(
             f'Total collected {len(title_reviews)} reviews for title ID {id_}'
         )
@@ -219,10 +221,11 @@ class ReviewCollector:
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
         for title_id in tqdm(title_ids, bar_format=BAR_FORMAT, disable=True):
-            memusg = psutil.Process().memory_info().rss / (1024 * 1024)
-            print(f'Starting parsing {title_id}. Current memory_usage {memusg:.2f} mb.')
             if movie_metadata[title_id]['reviews_collected_flg']:
                 continue
+
+            memusg = psutil.Process().memory_info().rss / (1024 * 1024)
+            print(f'Starting parsing {title_id}. Current memory_usage {memusg:.2f} mb.')
 
             title_reviews = self.collect_title_reviews(title_id)
 
