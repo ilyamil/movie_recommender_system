@@ -182,7 +182,7 @@ class ReviewCollector:
                         )
 
                 memusg = psutil.Process().memory_info().rss / (1024 * 1024)
-                print(f'Collecting reviews for title {title_id}. Current memory_usage {memusg:.2f} mb.')
+                print(f'Collecting reviews for title {id_}. Current memory_usage {memusg:.2f} mb.')
         self._logger.info(
             f'Total collected {len(title_reviews)} reviews for title ID {id_}'
         )
