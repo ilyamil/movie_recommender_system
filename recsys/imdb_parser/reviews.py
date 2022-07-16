@@ -103,16 +103,19 @@ class ReviewCollector:
     @staticmethod
     def find_reviews_num(response: requests.Response) -> int:
         bs = BeautifulSoup(response.text, 'lxml')
-        review_cnt = (
-            bs
-            .find('div', {'class', 'header'})
-            .find('div')
-            .text
-            .replace(' ', '')
-            .replace(',', '')
-            .split('Reviews')[0]
-        )
-        return int(review_cnt)
+        try:
+            review_cnt = (
+                bs
+                .find('div', {'class', 'header'})
+                .find('div')
+                .text
+                .replace(' ', '')
+                .replace(',', '')
+                .split('Reviews')[0]
+            )
+            return int(review_cnt)
+        except Exception:
+            return 0
 
     def collect_title_reviews(self, id_: str) -> List[Dict[str, Any]]:
         request_params = {
