@@ -15,7 +15,7 @@ ATTRIBUTES = [
 PARSER_CONFIG = os.path.join('config', 'parser_config.yaml')
 CREDEENTIALS = os.path.join('config', 'credentials.yaml')
 URL_FOR_HEALTH_CHECK = 'https://www.imdb.com/chart/top/?ref_=nv_mv_250'
-TIMEOUT = 5
+TIMEOUT = 60
 
 
 def parse_arguments():

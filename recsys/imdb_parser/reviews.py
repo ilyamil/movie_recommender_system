@@ -40,6 +40,9 @@ LINK_URL_TEMPLATE = (
 class ReviewCollector:
     def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
         self._bucket = config['bucket']
+        self._metadata_file = os.path.join(
+            's3://', self._bucket, config['metadata_file']
+        )
         self._review_folder = config['review_folder']
         self._n_reviews = config['n_reviews']
         self._chunk_size = config['chunk_size']
@@ -58,21 +61,20 @@ class ReviewCollector:
             'secret': credentials['secret_access_key']
         }
 
-        self._metadata_file = os.path.join(
-            's3://', self._bucket, config['metadata_file']
-        )
-        self._metadata = read_json(
+        metadata = read_json(
             self._metadata_file,
             storage_options=self._storage_options,
             orient='index'
         )
-        if 'reviews_collected_flg' not in self._metadata.columns:
-            self._metadata['reviews_collected_flg'] = 0
-            self._metadata.to_json(
+        if 'reviews_collected_flg' not in metadata.columns:
+            metadata['reviews_collected_flg'] = 0
+            metadata.to_json(
                 self._metadata_file,
                 storage_options=self._storage_options,
                 orient='index'
             )
+        del metadata
+
         if not (self._pct_reviews or self._n_reviews):
             raise ValueError(
                 'Only one of these arguments needs to be set'
@@ -178,9 +180,9 @@ class ReviewCollector:
                             f' with message: {e}'
                         )
 
-        self._logger.info(
-            f'Total collected {len(title_reviews)} reviews for title ID {id_}'
-        )
+            session.close()
+            res.close()
+
         return title_reviews
 
     def is_all_reviews_collected(self) -> bool:
@@ -206,29 +208,27 @@ class ReviewCollector:
     def collect(self) -> bool:
         print('Collecting reviews...')
 
-        self._movie_metadata_df = read_json(
+        metadata = read_json(
             self._metadata_file,
             storage_options=self._storage_options,
             orient='index'
         )
-        movie_metadata = self._movie_metadata_df.T.to_dict()
 
-        title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
-        for title_id in tqdm(title_ids, bar_format=BAR_FORMAT, disable=True):
-            if movie_metadata[title_id]['reviews_collected_flg']:
+        for title_id in tqdm(metadata.index, bar_format=BAR_FORMAT):
+            if metadata.at[title_id, 'reviews_collected_flg']:
                 continue
 
             title_reviews = self.collect_title_reviews(title_id)
 
             # This line extracts pure title id from raw form
             # e.g. '/title/tt0468569/' -> 'tt0468569'
-            title_id_ = title_id.split('/')[-2]
+            id_ = title_id.split('/')[-2]
             title_path = os.path.join(
                 's3://',
                 self._bucket,
                 self._review_folder,
-                title_id_ + '.csv'
+                id_ + '.csv'
             )
             try:
                 if len(title_reviews) > 0:
@@ -239,29 +239,23 @@ class ReviewCollector:
 
                 # Update status on each iteration, because it takes a long
                 # time to parse reviews even for a single title.
-                movie_metadata[title_id]['reviews_collected_flg'] = 1
-                DataFrame(movie_metadata).to_json(
-                    self._metadata_file,
-                    storage_options=self._storage_options
-                )
-
-                self._movie_metadata_df = read_json(
+                metadata.at[title_id, 'reviews_collected_flg'] = 1
+                metadata.to_json(
                     self._metadata_file,
                     storage_options=self._storage_options,
                     orient='index'
                 )
-                movie_metadata = self._movie_metadata_df.T.to_dict()
 
                 counter += 1
 
                 self._logger.info(
-                    f'Collected {len(title_reviews)} reviews'
-                    + f' about title {title_id_}'
+                    f'Total collected {len(title_reviews)} reviews '
+                    + f'for title ID {id_}'
                 )
             except Exception as e:
                 self._logger.warn(
                     f'Exception {str(e)} while collecting reviews'
-                    + f' about title {title_id_}'
+                    + f' about title {id_}'
                 )
 
             if counter == self._chunk_size:
