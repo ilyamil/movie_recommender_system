@@ -18,11 +18,10 @@ BATCH_SIZE = 50
 
 class MetadataCollector:
     """
-    Contains methods for parsing IMDB movie search web pages,
-    then extract movie identifiers from them.
+    Contains methods for parsing IMDB movie details.
 
     Public methods:
-        * collect_title_details: parses web page of given movie.
+        * collect_title_details: parses web page of a given movie.
         * is_all_metadata_collected: check if there any title we can scrape
         details about.
         * collect: parses pages and saves IDs on a disk or cloud.
@@ -189,6 +188,7 @@ class MetadataCollector:
                 counter += 1
 
                 self._logger.info(f'Collected metadata for title {title_id}')
+                title_page.close()
             except Exception as e:
                 self._logger.warn(f'Exception {str(e)} in parsing {url}')
             finally:

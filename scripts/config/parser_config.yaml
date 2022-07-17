@@ -23,7 +23,6 @@ metadata:
 reviews:
   mode: 'cloud'
   metadata_file: 'metadata/metadata.json'
-  review_folder: 'reviews'
   n_reviews: null
   chunk_size: 200
   pct_reviews: 100

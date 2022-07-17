@@ -2,11 +2,13 @@ import os
 import warnings
 import requests
 from time import sleep
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from pandas import DataFrame, read_json
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+from dotenv import load_dotenv
 from recsys.utils import send_request, create_logger
 
 warnings.filterwarnings('ignore')
@@ -38,28 +40,104 @@ LINK_URL_TEMPLATE = (
 
 
 class ReviewCollector:
-    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
-        self._bucket = config['bucket']
-        self._metadata_file = os.path.join(
-            's3://', self._bucket, config['metadata_file']
-        )
-        self._review_folder = config['review_folder']
+    """
+    Contains methods for parsing IMDB movie reviews.
+
+    Public methods:
+        * collect_review: parses reviews of a given movie.
+        * find_reviews_num: finds number of reviews for a given movie.
+        * is_all_reviews_collected: check if there any title we can scrape
+        details about.
+        * collect: parses pages and saves IDs on a disk or cloud.
+    """
+    def __init__(self, config: Dict[str, Any]):
+        """
+        Initializes Review Collector class. All parameters related to web
+        scraping of movie reviews must be specified in config.
+
+        The config must contains the following fields:
+        * mode: specifies where the results should be saved. When set up to
+        'local' all movie related data will be saved on local machine, where
+        application is running. When set up to 'cloud' related data saves on
+        AWS. Using 'cloud' mode you also need to set up the following
+        environment variables: AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY and
+        AWS_S3_BUCKET.
+
+        * metadata_file: name of file (possibly with folder) movies metadata
+        will be saved to.
+
+        * n_reviews: maximum number of reviews to scrape for a given movie.
+
+        * pct_reviews: percent of total number of reviews to scrape for a
+        given movie. If set to 100, then all reviews about movie will be
+        collected.
+
+        * chunk_size: number of movies a program try to parse in one iteration.
+        After each iteration there is a timout period to prevent too many
+        requests.
+
+        * sleep_time: time in seconds a program will be wait for before going
+        to next movie. This parameter should be set reasonably, not too high
+        (web scraping will last too long), not too low (increasing load on IMDB
+        server for a long period of time is not ethical and such requests could
+        be rate limited as a result).
+
+        * log_file: file name to write logs related to collecting IDs.
+
+        * log_level: minimal level of log messages.
+
+        * log_msg_format: message format in logs.
+
+        * log_dt_format: datetime format in logs.
+
+        Note:
+        * There must be specified either pct_reivews or n_reviews for program
+        to run correctly.
+        """
+        self._mode = config['mode']
         self._n_reviews = config['n_reviews']
         self._chunk_size = config['chunk_size']
         self._pct_reviews = config['pct_reviews']
         self._sleep_time = config['sleep_time']
 
-        self._logger = create_logger(
-            filename=config['log_file'],
-            msg_format=config['log_msg_format'],
-            dt_format=config['log_dt_format'],
-            level=config['log_level']
-        )
+        if self._mode == 'cloud':
+            load_dotenv()
+            self._storage_options = {
+                'key': os.getenv('AWS_ACCESS_KEY'),
+                'secret': os.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+            if (not self._storage_options['key'])\
+                    or (not self._storage_options['secret']):
+                raise ValueError(
+                    'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
+                    + ' must be specified in environment variables'
+                )
 
-        self._storage_options = {
-            'key': credentials['access_key'],
-            'secret': credentials['secret_access_key']
-        }
+            self._bucket = os.getenv('AWS_S3_BUCKET')
+            if not self._bucket:
+                raise ValueError(
+                    'AWS_S3_BUCKET must be specified in environment variables'
+                )
+
+            self._metadata_file = os.path.join(
+                's3://', self._bucket, config['metadata_file']
+            )
+            self._review_folder = os.path.join(
+                's3://', self._bucket, 'reviews'
+            )
+        elif self._mode == 'local':
+            self._storage_options = None
+            self._root_dir = str(Path(__file__).parents[2])
+            self._metadata_file = os.path.join(
+                self._root_dir,
+                'data',
+                config['metadata_file']
+            )
+            self._review_folder = os.path.join(
+                self._root_dir, 'data', 'reviews'
+            )
+        else:
+            raise ValueError('Supported modes: "local", "cloud"')
 
         metadata = read_json(
             self._metadata_file,
@@ -74,6 +152,13 @@ class ReviewCollector:
                 orient='index'
             )
         del metadata
+
+        self._logger = create_logger(
+            filename=config['log_file'],
+            msg_format=config['log_msg_format'],
+            dt_format=config['log_dt_format'],
+            level=config['log_level']
+        )
 
         if not (self._pct_reviews or self._n_reviews):
             raise ValueError(
@@ -227,12 +312,7 @@ class ReviewCollector:
             # This line extracts pure title id from raw form
             # e.g. '/title/tt0468569/' -> 'tt0468569'
             id_ = title_id.split('/')[-2]
-            title_path = os.path.join(
-                's3://',
-                self._bucket,
-                self._review_folder,
-                id_ + '.csv'
-            )
+            title_path = os.path.join(self._review_folder, id_ + '.csv')
             try:
                 if len(title_reviews) > 0:
                     DataFrame.from_records(title_reviews).to_csv(
