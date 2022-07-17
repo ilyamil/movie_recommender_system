@@ -1,10 +1,12 @@
 import os
 import re
 from time import sleep
+from pathlib import Path
 from typing import Optional, Dict, List, Any, Union
 from pandas import DataFrame, read_json
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from dotenv import load_dotenv
 from recsys.utils import send_request, create_logger
 
 
@@ -15,19 +17,87 @@ BATCH_SIZE = 50
 
 
 class MetadataCollector:
-    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
-        self._bucket = config['bucket']
-        self._metadata_file = os.path.join(
-            's3://', self._bucket, config['metadata_file']
-        )
-        self._genres = config['genres']
+    """
+    Contains methods for parsing IMDB movie search web pages,
+    then extract movie identifiers from them.
+
+    Public methods:
+        * collect_title_details: parses web page of given movie.
+        * is_all_metadata_collected: check if there any title we can scrape
+        details about.
+        * collect: parses pages and saves IDs on a disk or cloud.
+    """
+    def __init__(self, config: Dict[str, Any]):
+        """
+        Initializes Metadata Collector class. All parameters related to web
+        scraping of movie metadata must be specified in config.
+
+        The config must contains the following fields:
+        * mode: specifies where the results should be saved. When set up to
+        'local' all movie related data will be saved on local machine, where
+        application is running. When set up to 'cloud' related data saves on
+        AWS. Using 'cloud' mode you also need to set up the following
+        environment variables: AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY and
+        AWS_S3_BUCKET.
+
+        * metadata_file: name of file (possibly with folder) movies metadata
+        will be saved to.
+
+        * chunk_size: number of movies a program try to parse in one iteration.
+        After each iteration there is a timout period to prevent too many
+        requests.
+
+        * sleep_time: time in seconds a program will be wait for before going
+        to next movie. This parameter should be set reasonably, not too high
+        (web scraping will last too long), not too low (increasing load on IMDB
+        server for a long period of time is not ethical and such requests could
+        be rate limited as a result).
+
+        * log_file: file name to write logs related to collecting IDs.
+
+        * log_level: minimal level of log messages.
+
+        * log_msg_format: message format in logs.
+
+        * log_dt_format: datetime format in logs.
+        """
+        self._mode = config['mode']
         self._chunk_size = config['chunk_size']
         self._sleep_time = config['sleep_time']
 
-        self._storage_options = {
-            'key': credentials['access_key'],
-            'secret': credentials['secret_access_key']
-        }
+        if self._mode == 'cloud':
+            load_dotenv()
+            self._storage_options = {
+                'key': os.getenv('AWS_ACCESS_KEY'),
+                'secret': os.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+            if (not self._storage_options['key'])\
+                    or (not self._storage_options['secret']):
+                raise ValueError(
+                    'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
+                    + ' must be specified in environment variables'
+                )
+
+            self._bucket = os.getenv('AWS_S3_BUCKET')
+            if not self._bucket:
+                raise ValueError(
+                    'AWS_S3_BUCKET must be specified in environment variables'
+                )
+
+            self._metadata_file = os.path.join(
+                's3://', self._bucket, config['metadata_file']
+            )
+        elif self._mode == 'local':
+            self._storage_options = None
+
+            self._root_dir = str(Path(__file__).parents[2])
+            self._metadata_file = os.path.join(
+                self._root_dir,
+                'data',
+                config['metadata_file']
+            )
+        else:
+            raise ValueError('Supported modes: "local", "cloud"')
 
         self._logger = create_logger(
             filename=config['log_file'],
@@ -35,33 +105,6 @@ class MetadataCollector:
             dt_format=config['log_dt_format'],
             level=config['log_level']
         )
-
-        if not isinstance(self._genres, list):
-            self._genres = [self._genres]
-
-        self._genres = [genre.lower() for genre in self._genres]
-
-        movie_metadata = read_json(
-            self._metadata_file,
-            storage_options=self._storage_options,
-            orient='index'
-        )
-        available_genres = {
-            item['main_genre'].lower()
-            for item in movie_metadata.T.to_dict().values()
-        }
-        if 'all' not in self._genres:
-            use_genres = set(self._genres).intersection(available_genres)
-            genre_diff = set(self._genres) - set(use_genres)
-            if genre_diff:
-                self._logger.warning(
-                    f'No {", ".join(genre_diff)} in possible genres'
-                )
-            if not use_genres:
-                raise ValueError('No valid genres were passed')
-            self._genres = use_genres
-        else:
-            self._genres = available_genres
 
         self._logger.info('Successfully initialized MetadataCollector')
 
@@ -91,6 +134,10 @@ class MetadataCollector:
         }
 
     def is_all_metadata_collected(self) -> bool:
+        """
+        Checks are there any movie in a database which metadata was not
+        collected yet.
+        """
         metadata_df = read_json(
             self._metadata_file,
             storage_options=self._storage_options,
@@ -109,6 +156,10 @@ class MetadataCollector:
         return total_movies == already_collected
 
     def collect(self) -> None:
+        """
+        Parses relevant web pages to extract movie identifiers and write
+        them on a disk or cloud.
+        """
         print('Collecting metadata...')
 
         movie_metadata_df = read_json(
@@ -121,10 +172,9 @@ class MetadataCollector:
         title_ids = [t for t, _ in movie_metadata.items()]
         counter = 0
         session_counter = 0
-        iter_wrapper = tqdm(
+        for i, title_id in tqdm(
             enumerate(title_ids), total=len(title_ids), bar_format=BAR_FORMAT
-        )
-        for i, title_id in iter_wrapper:
+        ):
             if movie_metadata[title_id].get('original_title', None):
                 continue
 

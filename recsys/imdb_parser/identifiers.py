@@ -2,9 +2,11 @@ import os
 import re
 from time import sleep
 from typing import Dict, Any
+from pathlib import Path
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from pandas import DataFrame
+from dotenv import load_dotenv
 from recsys.utils import send_request, create_logger
 
 
@@ -49,45 +51,94 @@ class IDCollector:
     Public method:
         collect: parses pages and saves IDs on a disk.
     """
-    def __init__(self, config: Dict[str, Any], credentials: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):
         """
-        Initializes collector class. All parameters related to collection
-        of movie identifiers set up here using config.
-        The following fields must be set in config file:
-            1. dir - a directory to save identifiers.
-            2. log_file - a file to write all logs while collecting IDs
-            3. genres - movie genres to collect.
-                All possible genres can be found there
-                https://www.imdb.com/feature/genre/?ref_=nv_ch_gr
-                under "Popular Movies by Genre" title.
-            4. n_titles - number of movie identifiers to collect in
-                a specified genre.
-            5. pct_titles - percent of total movies available to collect
-                in a specified genre.
-            6. request_delay: min_delay and max_delay - lower and upper bound
-                of waiting time before next bunch of identifiers will
-                be processed.
+        Initializes Identifier Collector class. All parameters related to web
+        scraping of movie identifiers must be specified in config.
+
+        The config must contains the following fields:
+
+        * mode: specifies where the results should be saved. When set up to
+        'local' all movie related data will be saved on local machine, where
+        application is running. When set up to 'cloud' related data saves on
+        AWS. Using 'cloud' mode you also need to set up the following
+        environment variables: AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY and
+        AWS_S3_BUCKET.
+
+        * metadata_file: name of file (possibly with folder) movies metadata
+        will be saved to.
+
+        * genres: list of genres you want to collect metadata about. It's also
+        possible to set this field with 'all', in this case all available
+        genres will be used. All possible genres can be found here
+        https://www.imdb.com/feature/genre/?ref_=nv_ch_gr under
+        "Popular Movies by Genre" title.
+
+        * n_titles: number of titles to scrape information about in each genre.
+        Set to null if want to use not absolute number of titles, but percent
+        fraction. Titles in different genres could be overlapped.
+
+        * pct_titles: percent of titles to scrape information about in each
+        genre. Set to null if want to use absolute number of titles (parameter
+        n_titles). Titles in different genres could be overlapped.
+
+        * sleep_time: time in seconds a program will be wait for before going
+        to next page. This parameter should be set reasonably, not too high (
+        web scraping will last too long), not too low (increasing load on IMDB
+        server for a long period of time is not ethical and such requests could
+        be rate limited as a result).
+
+        * log_file: file name to write logs related to collecting IDs.
+
+        * log_level: minimal level of log messages.
+
+        * log_msg_format: message format in logs.
+
+        * log_dt_format: datetime format in logs.
+
         Notes:
         * One of these fields "n_titles" or "pct_titles" must be set to None,
             while the other set to desired value.
-        * Using smaller min_delay and max_delay linearly speed up web
-            scrapping but, on the other hand, it increases the workload
-            on IMDB server which is not totally ethical and could lead to
-            blocking of our requests. This trade-off is up to you.
         """
-        self._bucket = config['bucket']
-        self._metadata_file = os.path.join(
-            's3://', self._bucket, config['metadata_file']
-        )
+        self._mode = config['mode']
         self._genres = config['genres']
         self._sleep_time = config['sleep_time']
         n_titles = config['n_titles']
         pct_titles = config['pct_titles']
 
-        self._storage_options = {
-            'key': credentials['access_key'],
-            'secret': credentials['secret_access_key']
-        }
+        if self._mode == 'cloud':
+            load_dotenv()
+            self._storage_options = {
+                'key': os.getenv('AWS_ACCESS_KEY'),
+                'secret': os.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+            if (not self._storage_options['key'])\
+                    or (not self._storage_options['secret']):
+                raise ValueError(
+                    'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
+                    + ' must be specified in environment variables'
+                )
+
+            self._bucket = os.getenv('AWS_S3_BUCKET')
+            if not self._bucket:
+                raise ValueError(
+                    'AWS_S3_BUCKET must be specified in environment variables'
+                )
+
+            self._metadata_file = os.path.join(
+                's3://', self._bucket, config['metadata_file']
+            )
+        elif self._mode == 'local':
+            self._storage_options = None
+
+            root_dir = str(Path(__file__).parents[2])
+            self._metadata_file = os.path.join(
+                root_dir,
+                'data',
+                config['metadata_file']
+            )
+        else:
+            raise ValueError('Supported modes: "local", "cloud"')
 
         self._logger = create_logger(
             filename=config['log_file'],
@@ -190,7 +241,7 @@ class IDCollector:
     def collect(self) -> None:
         """
         Parses relevant web pages to extract movie identifiers and write
-        them on a disk.
+        them on a disk or cloud.
         """
         print('Collecting identifiers...')
 

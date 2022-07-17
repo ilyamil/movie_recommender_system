@@ -1,5 +1,5 @@
 id:
-  bucket: 'movie-on-friday'
+  mode: 'cloud'
   metadata_file: 'metadata/metadata.json'
   genres: 'all'
   n_titles: null
@@ -11,9 +11,8 @@ id:
   log_dt_format: '%Y-%m-%d %H:%M:%S'
 
 metadata:
-  bucket: 'movie-on-friday'
+  mode: 'cloud'
   metadata_file: 'metadata/metadata.json'
-  genres: 'all'
   chunk_size: 1000
   sleep_time: 0.2
   log_file: 'logs/imdb_parser/details.log'
@@ -22,7 +21,7 @@ metadata:
   log_dt_format: '%Y-%m-%d %H:%M:%S'
 
 reviews:
-  bucket: 'movie-on-friday'
+  mode: 'cloud'
   metadata_file: 'metadata/metadata.json'
   review_folder: 'reviews'
   n_reviews: null
