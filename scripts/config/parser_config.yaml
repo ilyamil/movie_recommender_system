@@ -31,3 +31,13 @@ reviews:
   log_level: 'INFO'
   log_msg_format: '%(asctime)s %(levelname)s %(message)s'
   log_dt_format: '%Y-%m-%d %H:%M:%S'  
+
+etl:
+  mode: 'cloud'
+  reviews_src: 
+  reviews_trg: 'data/preprocessed/1pct/'
+  details_trg: 'data/preprocessed/1pct/'
+  posters_trg: 'data/processed/1pct/posters/'
+  reviews_src: 'data/raw/reviews/1pct/'
+  details_src: 'data/raw/details/1pct/'
+  posters_src: 'data/processed/1pct/posters/'

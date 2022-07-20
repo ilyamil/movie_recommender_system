@@ -14,15 +14,18 @@ class Pipeline:
                     'Each step must be of length 2'
                     ' and match a form (<step_name>, <step_class>)'
                 )
-            self._pipeline.append({'step_name': step[0],
-                                   'step_func': step[1]})
+            self._pipeline.append({
+                'step_name': step[0], 'step_func': step[1]
+            })
 
     def print_schema(self):
         print('Pipeline schema:')
         for num, step in enumerate(self._pipeline):
             name, func = step.values()
-            print(f'{num + 1}. Name: {name:<5}',
-                  f'Transformer: {func}', sep='\n   ')
+            print(
+                f'{num + 1}. Name: {name:<5}',
+                f'Transformer: {func}', sep='\n   '
+            )
 
     def compose(self, data):
         result = data

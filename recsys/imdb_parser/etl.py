@@ -4,8 +4,49 @@ raw data collected by imdb parser.
 """
 import ast
 import re
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Tuple
 import pandas as pd
+from recsys.core.data import AbstractDataLoader, AbstractDataTransformer
+from recsys.core.pipeline import Pipeline
+
+
+class RawReviewsTransformer(AbstractDataTransformer):
+    def __init__(self, dataloader: AbstractDataLoader):
+        self._dataloader = dataloader
+
+    def transform(self) -> pd.DataFrame:
+        raw_data = self._dataloader.load_data(True)
+        pipeline = Pipeline(
+            ('split helpfulness column', split_helpfulness_col),
+            ('convert to datetime', convert_to_date)
+        )
+        return pipeline.compose(raw_data)
+
+
+class RawDetailsTransformer(AbstractDataTransformer):
+    def __init__(self, dataloader: AbstractDataLoader):
+        self._dataloader = dataloader
+
+    def transform(self) -> Tuple[pd.DataFrame]:
+        raw_details = self._dataloader.load_data(True)
+        pipeline = Pipeline(
+            ('split aggregate rating column', split_aggregate_rating_col),
+            ('split review summary', split_review_summary),
+            ('extract original title', extract_original_title),
+            ('extract tagline', extract_tagline),
+            ('extract details', extract_movie_details),
+            ('extract boxoffice', extract_boxoffice),
+            ('extract runtime', extract_runtime),
+            ('table normalization', normalize)
+        )
+        details = pipeline.compose(raw_details)
+        return details
+
+
+def normalize(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    norm = pd.json_normalize(df[col])
+    norm.columns = norm.columns.astype(int)
+    return norm
 
 
 def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -68,92 +109,62 @@ def convert_to_date(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_.drop(columns=['date'])
 
 
-def expand_short_form(string_num: str) -> Optional[float]:
-    if string_num is None:
-        return None
-
-    short_forms = {
-        'K': 1_000,
-        'M': 1_000_000,
-        'B': 1_000_000_000,
-        'T': 1_000_000_000_000
-    }
-    last_char = string_num[-1]
-    if last_char not in short_forms.keys():
-        return float(string_num)
-    return float(string_num[:-1]) * short_forms.get(last_char, None)
-
-
-def split_aggregate_rating_col(df_raw: pd.DataFrame) -> pd.DataFrame:
+def split_aggregate_rating(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Split column 'agg_rating' of type string into two columns:
-    'movie_rating' of type float and 'movie_total_votes' of type int.
+    'movie_rating' and 'num_votes'.
     After transformation the 'agg_rating' column is removed.
     """
     if 'agg_rating' not in df_raw.columns:
         raise ValueError('No "agg_rating" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    df_.loc[~df_['agg_rating'].str.contains('/10'), 'agg_rating'] = None
-    df_[['rating', 'total_votes']] = (
-        df_['agg_rating']
-        .str.split('/10', expand=True)
+    df_ = df_[~df_['agg_rating'].isna()]
+
+    short_forms = {
+        'K': 'e+03',
+        'M': 'e+06',
+        'B': 'e+09',
+        'T': 'e+12'
+    }
+    rating = pd.json_normalize(df_['agg_rating']).replace(
+        short_forms, regex=True
+    )
+    rating['rating'] = rating['avg_rating'].str.split('/', expand=True)[0]
+    df_[['rating', 'num_votes']] = (
+        rating
+        [['rating', 'num_votes']]
+        .astype(float)
         .values
     )
-    df_['total_votes'] = df_['total_votes'].apply(expand_short_form)
-    return (
-        df_
-        .astype({'rating': float, 'total_votes': float})
-        .drop('agg_rating', axis=1)
-    )
 
-
-def extract_original_title(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extract title from 'original_title' column by splitting it.
-    """
-    if 'original_title' not in df_raw.columns:
-        raise ValueError('No "original_title" column in input data')
-
-    df_ = df_raw.copy(deep=False)
-    df_['original_title'] = (
-        df_['original_title']
-        .str.split('Original title: ',
-                   expand=True)
-        .iloc[:, 1]
-    )
-    return df_
+    return df_.drop('agg_rating', axis=1)
 
 
 def split_review_summary(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Split column 'review_summary' into 3 columns: 'user_reviews_number',
-    'critic_reviews_number', 'metascore'.
+    Split column 'review_summary' into 3 columns: 'user_reviews_num',
+    'critic_reviews_num', 'metascore'.
     After transformation the 'review_summary' columns is removed.
     """
     if 'review_summary' not in df_raw.columns:
         raise ValueError('No "review_summary" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    columns = [
-        'user_reviews_num',
-        'critic_reviews_num',
-        'metascore'
-    ]
-    separator = 'User reviews|Critic reviews|Metascore'
-    # convert string to pyhton dict in each row
-    df_[columns] = pd.json_normalize(
-        df_['review_summary']
-        .apply(ast.literal_eval)
+
+    short_forms = {
+        'K': 'e+03',
+        'M': 'e+06',
+        'B': 'e+09',
+        'T': 'e+12'
+    }
+
+    df_[['user_review_num', 'critic_review_num', 'metascore']] = (
+        pd.json_normalize(df_['review_summary'])
+        .replace(short_forms, regex=True)
+        .astype(float)
+        .values
     )
-    # get numbers associated with entities in 'columns'
-    df_[columns] = (
-        df_[columns]
-        .apply(lambda x: x.str.split(separator))
-        .apply(lambda x: x.str.get(0))
-    )
-    for col in columns:
-        df_[col] = df_[col].apply(expand_short_form)
 
     return df_.drop('review_summary', axis=1)
 
@@ -234,9 +245,9 @@ def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
         .str.split(' ', expand=True)
         .agg(lambda x: f'{x[0]} {x[1]} {x[2]}', axis=1)
     )
-    df_['release_date'] = pd.to_datetime(df_['release_date'],
-                                         format='%B %d, %Y',
-                                         errors='coerce')
+    df_['release_date'] = pd.to_datetime(
+        df_['release_date'], format='%B %d, %Y', errors='coerce'
+    )
 
     country_pattern = '(Country of origin|Countries of origin)(.+?)Official'
     df_['country_of_origin'] = (
@@ -358,69 +369,3 @@ def parse_companies(x) -> Dict[str, Any]:
         records['company'].append(company)
         records['order_num'].append(int(num + 1))
     return records
-
-
-def normalize(df_raw: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-    """
-    Create a dictionary with following keys:
-    * 'main' - DataFrame with movie details (normalized columns excluded)
-    * 'imdb_recommendations' - DataFrame with movie identifiers and
-                               recommendations suggested by imdb for
-                               these movies
-    * 'actors' - DataFrame with movie identifiers and its actors played in
-    * 'country_of_origin' - DataFrame with movie identifiers and its
-                            country of origin
-    * 'production_company' - DataFrame with movie identifiers and its
-                             production companies
-    After transformation the normalized columns is removed.
-    All normalized DataFrames has an ID column - 'title_id'.
-    """
-    normalize_cols = [
-        'imdb_recommendations',
-        'actors',
-        'country_of_origin',
-        'production_company'
-    ]
-    if any(col not in df_raw.columns for col in normalize_cols):
-        cols_fmt = '\n' + '\n'.join(normalize_cols)
-        raise ValueError(
-            f'There are no one or many of these cols: {cols_fmt}'
-        )
-
-    df_ = df_raw.copy(deep=False)
-
-    df_['imdb_recommendations'] = (
-        df_['imdb_recommendations'].apply(ast.literal_eval)
-    )
-    recomms = df_.apply(parse_recommendations, axis=1)
-    recomms_df = pd.concat(
-        (pd.DataFrame(x) for x in recomms.values),
-        ignore_index=True
-    )
-
-    df_['actors'] = df_['actors'].apply(ast.literal_eval)
-    actors = df_.apply(parse_actors, axis=1)
-    actors_df = pd.concat(
-        (pd.DataFrame(x) for x in actors.values),
-        ignore_index=True
-    )
-
-    countries = df_.apply(parse_countries, axis=1)
-    countries_df = pd.concat(
-        (pd.DataFrame(x) for x in countries.values),
-        ignore_index=True
-    )
-
-    companies = df_.apply(parse_companies, axis=1)
-    companies_df = pd.concat(
-        (pd.DataFrame(x) for x in companies.values),
-        ignore_index=True
-    )
-
-    return {
-        'main': df_.drop(columns=normalize_cols),
-        'imdb_recommendations': recomms_df,
-        'actors': actors_df,
-        'country_of_origin': countries_df,
-        'production_company': companies_df
-    }
