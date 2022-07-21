@@ -6,41 +6,48 @@ import ast
 import re
 from typing import Optional, Dict, List, Any, Tuple
 import pandas as pd
-from recsys.core.data import AbstractDataLoader, AbstractDataTransformer
 from recsys.core.pipeline import Pipeline
 
 
-class RawReviewsTransformer(AbstractDataTransformer):
-    def __init__(self, dataloader: AbstractDataLoader):
-        self._dataloader = dataloader
+class ReviewsETL:
+    def extract(self, source_folder: str) -> pd.DataFrame:
+        pass
 
-    def transform(self) -> pd.DataFrame:
-        raw_data = self._dataloader.load_data(True)
+    @staticmethod
+    def transform(raw_data: pd.DataFrame) -> pd.DataFrame:
         pipeline = Pipeline(
             ('split helpfulness column', split_helpfulness_col),
-            ('convert to datetime', convert_to_date)
+            ('correct review author', correct_review_author),
+            ('correct review title', cut_off_review_title_newline),
+            ('convert to datetime', convert_to_date),
+            ('change data types', change_review_dtypes),
+            ('drop redundant columns',
+             lambda x: x.drop(['Unnamed: 0'], axis=1))
         )
         return pipeline.compose(raw_data)
 
+    def load(self, target_folder):
+        pass
 
-class RawDetailsTransformer(AbstractDataTransformer):
-    def __init__(self, dataloader: AbstractDataLoader):
-        self._dataloader = dataloader
 
-    def transform(self) -> Tuple[pd.DataFrame]:
-        raw_details = self._dataloader.load_data(True)
-        pipeline = Pipeline(
-            ('split aggregate rating column', split_aggregate_rating_col),
-            ('split review summary', split_review_summary),
-            ('extract original title', extract_original_title),
-            ('extract tagline', extract_tagline),
-            ('extract details', extract_movie_details),
-            ('extract boxoffice', extract_boxoffice),
-            ('extract runtime', extract_runtime),
-            ('table normalization', normalize)
-        )
-        details = pipeline.compose(raw_details)
-        return details
+# class MetadataETL:
+#     def __init__(self, dataloader: AbstractDataLoader):
+#         self._dataloader = dataloader
+
+#     def transform(self) -> Tuple[pd.DataFrame]:
+#         raw_details = self._dataloader.load_data(True)
+#         pipeline = Pipeline(
+#             ('split aggregate rating column', split_aggregate_rating_col),
+#             ('split review summary', split_review_summary),
+#             ('extract original title', extract_original_title),
+#             ('extract tagline', extract_tagline),
+#             ('extract details', extract_movie_details),
+#             ('extract boxoffice', extract_boxoffice),
+#             ('extract runtime', extract_runtime),
+#             ('table normalization', normalize)
+#         )
+#         details = pipeline.compose(raw_details)
+#         return details
 
 
 def normalize(df: pd.DataFrame, col: str) -> pd.DataFrame:
@@ -65,21 +72,20 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         .str.extractall('(\d+)')
         .unstack('match')
         .values
-        .astype(int)
     )
     return df_.drop(columns=['helpfulness'])
 
 
 def correct_review_author(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Standardize all review author identifiers in column 'author'
+    Standardizes all review author identifiers in column 'author'
     by preserving only minimum valid part in form of '/user/urXXXXXX'.
     """
     if 'author' not in df_raw.columns:
         raise ValueError('No "author" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    df_['author'] = ['author'].str.split('?', expand=True)[0]
+    df_['author'] = df_['author'].str.split('?', expand=True)[0]
     return df_
 
 
@@ -93,6 +99,18 @@ def cut_off_review_title_newline(df_raw: pd.DataFrame) -> pd.DataFrame:
     df_ = df_raw.copy(deep=False)
     df_['title'] = df_['title'].str.split('\n', expand=True)[0]
     return df_
+
+
+def change_review_dtypes(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Changes column data types to reduce memory footprint.
+    """
+    type_mapping = {
+        'upvotes': 'int16',
+        'total_votes': 'int16',
+        'rating': 'float16'
+    }
+    return df_raw.astype(type_mapping)
 
 
 def convert_to_date(df_raw: pd.DataFrame) -> pd.DataFrame:
