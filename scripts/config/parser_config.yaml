@@ -34,10 +34,6 @@ reviews:
 
 etl:
   mode: 'cloud'
-  reviews_src: 
-  reviews_trg: 'data/preprocessed/1pct/'
-  details_trg: 'data/preprocessed/1pct/'
-  posters_trg: 'data/processed/1pct/posters/'
-  reviews_src: 'data/raw/reviews/1pct/'
-  details_src: 'data/raw/details/1pct/'
-  posters_src: 'data/processed/1pct/posters/'
+  metadata_source: 'metadata/metadata.json'
+  metadata_target: 'metadata/movie_metadata.json'
+  reviews_num_partitions: 10

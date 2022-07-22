@@ -2,16 +2,56 @@
 Module contains functions to Extract, Transform, Load (ETL)
 raw data collected by imdb parser.
 """
-import ast
+import os
 import re
-from typing import Optional, Dict, List, Any, Tuple
+from typing import Optional, Dict, List, Any
+from pathlib import Path
+from dotenv import load_dotenv
+from tqdm import tqdm
 import pandas as pd
 from recsys.core.pipeline import Pipeline
 
 
 class ReviewsETL:
-    def extract(self, source_folder: str) -> pd.DataFrame:
-        pass
+    def __init__(self, config: Dict[str, Any]):
+        self._mode = config['mode']
+        self._metadata_src = config['metadata_source']
+        self._metadata_trg = config['metadata_target']
+        self._num_partitions = config['reviews_num_partitions']
+
+        if self._mode == 'cloud':
+            load_dotenv()
+            self._storage_options = {
+                'key': os.getenv('AWS_ACCESS_KEY'),
+                'secret': os.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+            if (not self._storage_options['key'])\
+                    or (not self._storage_options['secret']):
+                raise ValueError(
+                    'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
+                    + ' must be specified in environment variables'
+                )
+
+            self._bucket = os.getenv('AWS_S3_BUCKET')
+            if not self._bucket:
+                raise ValueError(
+                    'AWS_S3_BUCKET must be specified in environment variables'
+                )
+
+            self._metadata_file = os.path.join(
+                's3://', self._bucket, self._metadata_src
+            )
+        elif self._mode == 'local':
+            self._storage_options = None
+
+            root_dir = str(Path(__file__).parents[2])
+            self._metadata_file = os.path.join(
+                root_dir,
+                'data',
+                self._metadata_src
+            )
+        else:
+            raise ValueError('Supported modes: "local", "cloud"')
 
     @staticmethod
     def transform(raw_data: pd.DataFrame) -> pd.DataFrame:
@@ -26,28 +66,82 @@ class ReviewsETL:
         )
         return pipeline.compose(raw_data)
 
-    def load(self, target_folder):
-        pass
+    def run(self):
+        metadata = pd.read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        partition_to_titles = (
+            metadata['original_title']
+            .apply(hash)
+            .mod(self._num_partitions)
+            .reset_index()
+            .groupby('original_title')
+            .agg(set)
+        )
+
+        for partition in range(self._num_partitions):
+            partition_path = os.path.join(
+                's3://',
+                self._bucket,
+                f'reviews/reviews_partition_{partition + 1}.csv'
+            )
+            # check if there exist a partition data
+            try:
+                _ = pd.read_parquet(
+                    partition_path,
+                    columns=['rating'],
+                    storage_options=self._storage_options
+                )
+                continue
+            except FileNotFoundError:
+                pass
+
+            titles = partition_to_titles.at[partition, 'index']
+            reviews = []
+            for title in tqdm(titles, desc=f'Partition #{partition + 1}'):
+                review_path = os.path.join(
+                    's3://',
+                    self._bucket,
+                    f'reviews/{title[7:-1]}.csv'
+                )
+                try:
+                    raw_reviews = pd.read_csv(
+                        review_path,
+                        storage_options=self._storage_options
+                    )
+                except FileNotFoundError:
+                    continue
+
+                reviews.append(self.transform(raw_reviews))
+
+            partition_data = pd.concat(reviews).reset_index()
+            partition_data.to_parquet(
+                partition_path,
+                storage_options=self._storage_options
+            )
 
 
-# class MetadataETL:
-#     def __init__(self, dataloader: AbstractDataLoader):
-#         self._dataloader = dataloader
+class MetadataETL:
+    pass
+    # def __init__(self, dataloader: AbstractDataLoader):
+    #     self._dataloader = dataloader
 
-#     def transform(self) -> Tuple[pd.DataFrame]:
-#         raw_details = self._dataloader.load_data(True)
-#         pipeline = Pipeline(
-#             ('split aggregate rating column', split_aggregate_rating_col),
-#             ('split review summary', split_review_summary),
-#             ('extract original title', extract_original_title),
-#             ('extract tagline', extract_tagline),
-#             ('extract details', extract_movie_details),
-#             ('extract boxoffice', extract_boxoffice),
-#             ('extract runtime', extract_runtime),
-#             ('table normalization', normalize)
-#         )
-#         details = pipeline.compose(raw_details)
-#         return details
+    # def transform(self) -> Tuple[pd.DataFrame]:
+    #     raw_details = self._dataloader.load_data(True)
+    #     pipeline = Pipeline(
+    #         ('split aggregate rating column', split_aggregate_rating_col),
+    #         ('split review summary', split_review_summary),
+    #         ('extract original title', extract_original_title),
+    #         ('extract tagline', extract_tagline),
+    #         ('extract details', extract_movie_details),
+    #         ('extract boxoffice', extract_boxoffice),
+    #         ('extract runtime', extract_runtime),
+    #         ('table normalization', normalize)
+    #     )
+    #     details = pipeline.compose(raw_details)
+    #     return details
 
 
 def normalize(df: pd.DataFrame, col: str) -> pd.DataFrame:

@@ -1,30 +1,34 @@
+from ast import arg
 import os
-from recsys.utils import parse_config, get_full_path
-from recsys.core.data import CSVDataLoader
-from recsys.core.etl import RawDetailsTransformer, RawReviewsTransformer
+from argparse import ArgumentParser
+from recsys.utils import parse_config
+from recsys.imdb_parser.etl import ReviewsETL, MetadataETL
 
 
-CONFIG_FILE = 'config.yaml'
+PARSER_CONFIG = os.path.join('config', 'parser_config.yaml')
+
+
+def parse_arguments():
+    parser = ArgumentParser(
+        description='Python script for running ETL job.'
+    )
+    parser.add_argument(
+        '-e',
+        '--entity',
+        type=str,
+        choices=['metadata', 'reviews'],
+        help='Review data or Metadata'
+    )
+    return parser.parse_args()
 
 
 def main():
-    config = parse_config(CONFIG_FILE, 'etl')
-
-    reviews_trg = get_full_path(config['reviews_trg'])
-    details_trg = get_full_path(config['details_trg'])
-
-    reviews_dataloader = CSVDataLoader(get_full_path(config['reviews_src']))
-    details_dataloader = CSVDataLoader(get_full_path(config['details_src']))
-
-    reviews_transformer = RawReviewsTransformer(reviews_dataloader)
-    reviews = reviews_transformer.transform()
-    reviews.to_parquet(os.path.join(reviews_trg, 'reviews.parquet'))
-
-    details_transformer = RawDetailsTransformer(details_dataloader)
-    details, actors, recomms = details_transformer.transform()
-    details.to_parquet(os.path.join(details_trg, 'details.parquet'))
-    actors.to_parquet(os.path.join(details_trg, 'actors.parquet'))
-    recomms.to_parquet(os.path.join(details_trg, 'imdb_recomms.parquet'))
+    arguments = parse_arguments()
+    config = parse_config(PARSER_CONFIG)
+    if arguments.entity == 'metadata':
+        pass
+    elif arguments.entity == 'reviews':
+        ReviewsETL(config['etl']).run()
 
 
 if __name__ == '__main__':
