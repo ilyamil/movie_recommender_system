@@ -178,7 +178,7 @@ def correct_review_author(df_raw: pd.DataFrame) -> pd.DataFrame:
         raise ValueError('No "author" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    df_['author'] = df_['author'].str.split('?', expand=True)[0]
+    df_['author'] = df_['author'].astype(str).str.split('?', expand=True)[0]
     return df_
 
 
@@ -190,7 +190,7 @@ def cut_off_review_title_newline(df_raw: pd.DataFrame) -> pd.DataFrame:
         raise ValueError('No "title" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    df_['title'] = df_['title'].str.split('\n', expand=True)[0]
+    df_['title'] = df_['title'].astype(str).str.rstrip('\n')
     return df_
 
 
