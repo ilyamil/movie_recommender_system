@@ -9,14 +9,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from tqdm import tqdm
 import pandas as pd
-from recsys.core.pipeline import Pipeline
 
 
 class ReviewsETL:
     def __init__(self, config: Dict[str, Any]):
         self._mode = config['mode']
         self._metadata_src = config['metadata_source']
-        self._metadata_trg = config['metadata_target']
         self._num_partitions = config['reviews_num_partitions']
 
         if self._mode == 'cloud':
@@ -55,16 +53,16 @@ class ReviewsETL:
 
     @staticmethod
     def transform(raw_data: pd.DataFrame) -> pd.DataFrame:
-        pipeline = Pipeline(
-            ('split helpfulness column', split_helpfulness_col),
-            ('correct review author', correct_review_author),
-            ('correct review title', cut_off_review_title_newline),
-            ('convert to datetime', convert_to_date),
-            ('change data types', change_review_dtypes),
-            ('drop redundant columns',
-             lambda x: x.drop(['Unnamed: 0'], axis=1))
+        transformed_data = (
+            raw_data
+            .pipe(split_helpfulness_col)
+            .pipe(correct_review_author)
+            .pipe(cut_off_review_title_newline)
+            .pipe(convert_to_date)
+            .pipe(change_review_dtypes)
+            .drop(['Unnamed: 0'], axis=1)
         )
-        return pipeline.compose(raw_data)
+        return transformed_data
 
     def run(self):
         metadata = pd.read_json(
@@ -81,11 +79,12 @@ class ReviewsETL:
             .agg(set)
         )
 
+        print('Running ETL application')
         for partition in range(self._num_partitions):
             partition_path = os.path.join(
                 's3://',
                 self._bucket,
-                f'reviews/reviews_partition_{partition + 1}.csv'
+                f'reviews/reviews_partition_{partition + 1}.parquet'
             )
             # check if there exist a partition data
             try:
@@ -94,7 +93,7 @@ class ReviewsETL:
                     columns=['rating'],
                     storage_options=self._storage_options
                 )
-                continue
+                print(f'Partition #{partition + 1} already exists')
             except FileNotFoundError:
                 pass
 
@@ -116,10 +115,10 @@ class ReviewsETL:
 
                 reviews.append(self.transform(raw_reviews))
 
-            partition_data = pd.concat(reviews).reset_index()
-            partition_data.to_parquet(
+            pd.concat(reviews).reset_index().to_parquet(
                 partition_path,
-                storage_options=self._storage_options
+                storage_options=self._storage_options,
+                index=False
             )
 
 
@@ -202,7 +201,7 @@ def change_review_dtypes(df_raw: pd.DataFrame) -> pd.DataFrame:
     type_mapping = {
         'upvotes': 'int16',
         'total_votes': 'int16',
-        'rating': 'float16'
+        'rating': 'float32'
     }
     return df_raw.astype(type_mapping)
 
