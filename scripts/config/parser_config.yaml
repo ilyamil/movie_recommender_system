@@ -37,3 +37,4 @@ etl:
   metadata_source: 'metadata/metadata.json'
   metadata_target: 'metadata/movie_metadata.json'
   reviews_num_partitions: 10
+  reviews_partition_format: 'parquet'

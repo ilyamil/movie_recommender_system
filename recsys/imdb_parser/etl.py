@@ -16,6 +16,7 @@ class ReviewsETL:
         self._mode = config['mode']
         self._metadata_src = config['metadata_source']
         self._num_partitions = config['reviews_num_partitions']
+        self._partition_format = config['reviews_partition_format']
 
         if self._mode == 'cloud':
             load_dotenv()
@@ -50,6 +51,9 @@ class ReviewsETL:
             )
         else:
             raise ValueError('Supported modes: "local", "cloud"')
+
+        if self._partition_format not in ['parquet', 'csv']:
+            raise ValueError('Unsupported partition format for reviews')
 
     @staticmethod
     def transform(raw_data: pd.DataFrame) -> pd.DataFrame:
@@ -115,11 +119,21 @@ class ReviewsETL:
 
                 reviews.append(self.transform(raw_reviews))
 
-            pd.concat(reviews).reset_index().to_parquet(
-                partition_path,
-                storage_options=self._storage_options,
-                index=False
-            )
+            reviews_pdf = pd.concat(reviews).reset_index()
+
+            if self._partition_format == 'parquet':
+                reviews_pdf.to_parquet(
+                    partition_path,
+                    storage_options=self._storage_options,
+                    index=False
+                )
+            elif self._partition_format == 'csv':
+                reviews_pdf.to_csv(
+                    partition_path,
+                    storage_options=self._storage_options,
+                    index=False,
+                    compression='gzip'
+                )
 
 
 class MetadataETL:

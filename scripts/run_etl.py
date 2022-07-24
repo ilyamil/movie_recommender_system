@@ -1,4 +1,3 @@
-from ast import arg
 import os
 from argparse import ArgumentParser
 from recsys.utils import parse_config
@@ -28,7 +27,7 @@ def main():
     if arguments.entity == 'metadata':
         pass
     elif arguments.entity == 'reviews':
-        ReviewsETL(config['etl']).run()
+        ReviewsETL(config['etle']).run()
 
 
 if __name__ == '__main__':

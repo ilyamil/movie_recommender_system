@@ -53,15 +53,15 @@ def run_parser(arguments, config):
             time.sleep(TIMEOUT)
     elif arguments.attribute == 'reviews':
         collector = ReviewCollector(config['reviews'])
-        # while not collector.is_all_reviews_collected():
-        #     if not check_health_status(URL_FOR_HEALTH_CHECK):
-        #         print('Stop parsing. Recieved 4xx or 5xx status code')
-        #         break
+        while not collector.is_all_reviews_collected():
+            if not check_health_status(URL_FOR_HEALTH_CHECK):
+                print('Stop parsing. Recieved 4xx or 5xx status code')
+                break
 
-        #     collector.collect()
+            collector.collect()
 
-        #     print(f'Timeout for {TIMEOUT} seconds\n')
-        #     time.sleep(TIMEOUT)
+            print(f'Timeout for {TIMEOUT} seconds\n')
+            time.sleep(TIMEOUT)
     else:
         raise ValueError(
             f'possible values for --attribute: {", ".join(ATTRIBUTES)}'
