@@ -138,6 +138,46 @@ class ReviewsETL:
 class MetadataETL:
     def __init__(self, config: Dict[str, Any]):
         self._mode = config['mode']
+        self._metadata_src = config['metadata_source']
+        self._metadata_trg = config['metadata_target']
+
+        if self._mode == 'cloud':
+            load_dotenv()
+            self._storage_options = {
+                'key': os.getenv('AWS_ACCESS_KEY'),
+                'secret': os.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+            if (not self._storage_options['key'])\
+                    or (not self._storage_options['secret']):
+                raise ValueError(
+                    'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
+                    + ' must be specified in environment variables'
+                )
+
+            self._bucket = os.getenv('AWS_S3_BUCKET')
+            if not self._bucket:
+                raise ValueError(
+                    'AWS_S3_BUCKET must be specified in environment variables'
+                )
+
+            self._metadata_file = os.path.join(
+                's3://', self._bucket, self._metadata_src
+            )
+            self._metadata_processed_file = os.path.join(
+                's3://', self._bucket, self._metadata_trg
+            )
+        elif self._mode == 'local':
+            self._storage_options = None
+
+            root_dir = str(Path(__file__).parents[2])
+            self._metadata_file = os.path.join(
+                root_dir, 'data', self._metadata_src
+            )
+            self._metadata_processed_file = os.path.join(
+                root_dir, 'data', self._metadata_trg
+            )
+        else:
+            raise ValueError('Supported modes: "local", "cloud"')
 
     @staticmethod
     def transform(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -149,7 +189,21 @@ class MetadataETL:
             .pipe(split_movie_details)
             .pipe(split_boxoffice)
         )
+        transformed_data.columns.name = None
         return transformed_data
+
+    def run(self):
+        print('Running ETL application')
+        metadata_raw = pd.read_json(
+            self._metadata_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
+        self.transform(metadata_raw).to_json(
+            self._metadata_processed_file,
+            storage_options=self._storage_options,
+            orient='index'
+        )
 
 
 def normalize(df: pd.DataFrame, col: str) -> pd.DataFrame:
@@ -335,7 +389,7 @@ def split_countries_of_origin(df_raw: pd.DataFrame) -> pd.DataFrame:
         if num not in countries_df.columns:
             countries_df[num] = None
 
-    countries_df = countries_df.rename(columns={
+    countries_df = countries_df[[0, 1, 2]].rename(columns={
             0: 'country_of_origin_1',
             1: 'country_of_origin_2',
             2: 'country_of_origin_3'}

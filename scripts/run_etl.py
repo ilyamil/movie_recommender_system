@@ -25,9 +25,9 @@ def main():
     arguments = parse_arguments()
     config = parse_config(PARSER_CONFIG)
     if arguments.entity == 'metadata':
-        pass
+        MetadataETL(config['etl']).run()
     elif arguments.entity == 'reviews':
-        ReviewsETL(config['etle']).run()
+        ReviewsETL(config['etl']).run()
 
 
 if __name__ == '__main__':
