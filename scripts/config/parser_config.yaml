@@ -35,6 +35,6 @@ reviews:
 etl:
   mode: 'cloud'
   metadata_source: 'metadata/metadata.json'
-  metadata_target: 'metadata/movie_metadata.json'
+  metadata_target: 'metadata/metadata_features.json'
   reviews_num_partitions: 10
   reviews_partition_format: 'parquet'

@@ -38,5 +38,3 @@ def test_convert_to_date(reviews):
     assert 'review_date' in df_.columns
     assert 'date' not in df_.columns
     assert df_.loc[0, 'review_date'] == datetime(2020, 1, 31).date()
-
-

@@ -3,8 +3,7 @@ Module contains functions to Extract, Transform, Load (ETL)
 raw data collected by imdb parser.
 """
 import os
-import re
-from typing import Optional, Dict, List, Any
+from typing import Dict, List, Any
 from pathlib import Path
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -137,24 +136,20 @@ class ReviewsETL:
 
 
 class MetadataETL:
-    pass
-    # def __init__(self, dataloader: AbstractDataLoader):
-    #     self._dataloader = dataloader
+    def __init__(self, config: Dict[str, Any]):
+        self._mode = config['mode']
 
-    # def transform(self) -> Tuple[pd.DataFrame]:
-    #     raw_details = self._dataloader.load_data(True)
-    #     pipeline = Pipeline(
-    #         ('split aggregate rating column', split_aggregate_rating_col),
-    #         ('split review summary', split_review_summary),
-    #         ('extract original title', extract_original_title),
-    #         ('extract tagline', extract_tagline),
-    #         ('extract details', extract_movie_details),
-    #         ('extract boxoffice', extract_boxoffice),
-    #         ('extract runtime', extract_runtime),
-    #         ('table normalization', normalize)
-    #     )
-    #     details = pipeline.compose(raw_details)
-    #     return details
+    @staticmethod
+    def transform(df_raw: pd.DataFrame) -> pd.DataFrame:
+        transformed_data = (
+            df_raw
+            .pipe(split_aggregate_rating)
+            .pipe(split_review_summary)
+            .pipe(split_movie_genres)
+            .pipe(split_movie_details)
+            .pipe(split_boxoffice)
+        )
+        return transformed_data
 
 
 def normalize(df: pd.DataFrame, col: str) -> pd.DataFrame:
@@ -179,6 +174,7 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
         .str.extractall('(\d+)')
         .unstack('match')
         .values
+        .astype('float32')
     )
     return df_.drop(columns=['helpfulness'])
 
@@ -259,7 +255,7 @@ def split_aggregate_rating(df_raw: pd.DataFrame) -> pd.DataFrame:
     df_[['rating', 'num_votes']] = (
         rating
         [['rating', 'num_votes']]
-        .astype(float)
+        .astype('float32')
         .values
     )
 
@@ -287,210 +283,193 @@ def split_review_summary(df_raw: pd.DataFrame) -> pd.DataFrame:
     df_[['user_review_num', 'critic_review_num', 'metascore']] = (
         pd.json_normalize(df_['review_summary'])
         .replace(short_forms, regex=True)
-        .astype(float)
+        .astype('float32')
         .values
     )
 
     return df_.drop('review_summary', axis=1)
 
 
-def extract_tagline(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extract tagline from column 'tagline'.
-    """
-    if 'tagline' not in df_raw.columns:
-        raise ValueError('No "tagline" column in input data')
+def format_release_date(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'release_date' not in df_raw.columns:
+        raise ValueError('No "release_date" column in input data')
 
     df_ = df_raw.copy(deep=False)
-    df_['tagline'] = df_['tagline'].str.split('Taglines', expand=True)[1]
+    rd = (
+        df_['release_date']
+        .explode()
+        .str.split('(', expand=True)
+        [0]
+        .str.rstrip()
+    )
+    df_['release_date'] = pd.to_datetime(rd, errors='coerce')
     return df_
 
 
-def extract_substrings_after_anchors(s: str, anchors: List[str])\
-        -> Optional[Dict[str, str]]:
-    details = {}
-    empty_anchors = []
-    use_anchors = []
-    for anchor in anchors:
-        if anchor not in s:
-            empty_anchors.append(anchor)
-        else:
-            use_anchors.append(anchor)
-    for section_num in range(len(use_anchors)):
-        start = use_anchors[section_num]
-        left_loc = s.find(start)
-        if section_num != len(use_anchors) - 1:
-            end = use_anchors[section_num + 1]
-            right_loc = s.rfind(end)
-            details[start] = s[left_loc + len(start): right_loc]
-        else:
-            details[start] = s[left_loc + len(start):]
-    details.update(**dict.fromkeys(empty_anchors))
-    return details
+def format_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'runtime' not in df_raw.columns:
+        raise ValueError('No "release_date" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['runtime'] = pd.to_timedelta(df_['runtime']) / pd.Timedelta('1 minute')
+    return df_
 
 
-def split_with_capital_letter(x) -> Optional[List[str]]:
-    """
-    Splits a string into tokens by capital letter occurance.
-    Example: 'ThisIsString' -> ['This', 'Is', 'String']
-    """
+def format_aka(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'also_known_as' not in df_raw.columns:
+        raise ValueError('No "also_known_as" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['also_known_as'] = df_['also_known_as'].explode()
+    return df_
+
+
+def split_countries_of_origin(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'countries_of_origin' not in df_raw.columns:
+        raise ValueError('No "countries_of_origin" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+
+    countries_df = df_['countries_of_origin'].apply(pd.Series)
+    for num in [1, 2]:
+        if num not in countries_df.columns:
+            countries_df[num] = None
+
+    countries_df = countries_df.rename(columns={
+            0: 'country_of_origin_1',
+            1: 'country_of_origin_2',
+            2: 'country_of_origin_3'}
+    )
+    df_ = pd.concat([df_, countries_df], axis=1)
+    return df_.drop('countries_of_origin', axis=1)
+
+
+def split_language(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'language' not in df_raw.columns:
+        raise ValueError('No "language" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    languages_df = df_['language'].apply(pd.Series)
+
+    if 1 in languages_df.columns:
+        languages_df[0] = languages_df[0].fillna(languages_df[1])
+
+    df_['original_language'] = languages_df[0]
+    return df_.drop('language', axis=1)
+
+
+def split_production_companies(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'production_companies' not in df_raw.columns:
+        raise ValueError('No "production_companies" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+
+    companies_df = df_['production_companies'].apply(pd.Series)
+    for num in [1, 2]:
+        if num not in companies_df.columns:
+            companies_df[num] = None
+
+    companies_df = companies_df.rename(columns={
+            0: 'production_company_1',
+            1: 'production_company_2',
+            2: 'production_company_3'}
+    )
+    df_ = pd.concat([df_, companies_df], axis=1)
+    return df_.drop('production_companies', axis=1)
+
+
+def get_filming_country(s: List) -> str:
     try:
-        tokens = re.findall('[A-Z][^A-Z]*', x)
-        entities = []
-        entity = ''
-        for token in tokens:
-            stoken = token.strip()
-            entity += ' ' + stoken if len(entity) != 0 else stoken
-            if token[-1] != ' ':
-                entities.append(entity)
-                entity = ''
-        return entities
+        return s[-1]
     except Exception:
-        return []
+        return None
 
 
-def extract_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
+def split_filming_locations(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'filming_locations' not in df_raw.columns:
+        raise ValueError('No "filming_locations" column in input data')
+
+    df_ = df_raw.copy(deep=False)
+    df_['filming_location'] = df_['filming_locations'].apply(pd.Series)
+    df_['filming_country'] = (
+        df_['filming_location']
+        .str.split()
+        .apply(get_filming_country)
+    )
+    return df_.drop('filming_locations', axis=1)
+
+
+def split_movie_details(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Extract the following movie details from column 'details'
-    and add them to DataFrame:
-        * 'release_date' (also convert to datetime),
-        * 'country_of_origin',
-        * 'production_company'
+    Splits a column 'details' into 7 column groups and add them to dataframe:
+        * 'release_date'
+        * 'country_of_origin_1', 'country_of_origin_2', 'country_of_origin_3'
+        * 'original_language'
+        * 'also_known_as'
+        * 'production_company_1', 'production_company_2', 'production_company_3' # noqa
+        * 'filming_location', 'filming_country'
+        * 'runtime'
     After transformation the 'details' column is removed.
     """
     if 'details' not in df_raw.columns:
         raise ValueError('No "details" column in input data')
 
-    df_ = df_raw.copy(deep=False)
-
-    date_pattern = 'Release date(.+?)Countr'
-    df_['release_date'] = (
-        df_['details']
-        .str.split(date_pattern, expand=True)[1]
-        .str.split(' ', expand=True)
-        .agg(lambda x: f'{x[0]} {x[1]} {x[2]}', axis=1)
+    df_ = df_raw.reset_index()
+    df_details = (
+        pd.json_normalize(df_['details'])
+        .pipe(format_release_date)
+        .pipe(format_aka)
+        .pipe(format_runtime)
+        .pipe(split_countries_of_origin)
+        .pipe(split_language)
+        .pipe(split_production_companies)
+        .pipe(split_filming_locations)
     )
-    df_['release_date'] = pd.to_datetime(
-        df_['release_date'], format='%B %d, %Y', errors='coerce'
+    df_out = (
+        pd.concat([df_, df_details], axis=1)
+        .drop(columns='details')
+        .set_index('index')
+    )
+    df_out.columns.name = None
+    return df_out
+
+
+def split_movie_genres(df_raw: pd.DataFrame) -> pd.DataFrame:
+    if 'genres' not in df_raw.columns:
+        raise ValueError('No "genres" column in input data')
+
+    df_ = df_raw.reset_index()
+
+    df_genres = df_['genres'].apply(pd.Series)
+    for num in [1, 2]:
+        if num not in df_genres.columns:
+            df_genres[num] = None
+
+    df_genres = df_genres.rename(
+        columns={0: 'genre_1', 1: 'genre_2', 2: 'genre_3'}
     )
 
-    country_pattern = '(Country of origin|Countries of origin)(.+?)Official'
-    df_['country_of_origin'] = (
-        df_['details']
-        .str.split(country_pattern, expand=True)[2]
-        .apply(lambda x: split_with_capital_letter(x))
+    df_out = (
+        pd.concat((df_, df_genres), axis=1)
+        .drop(columns='genres')
+        .set_index('index')
     )
-
-    company_pattern = '(Production companies|Production company)(.+?)See more'
-    df_['production_company'] = (
-        df_['details']
-        .str.split(company_pattern, expand=True)[2]
-        .apply(lambda x: split_with_capital_letter(x))
-    )
-
-    return df_.drop('details', axis=1)
+    df_out.columns.name = None
+    return df_out
 
 
-def extract_boxoffice(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extract 'budget' and 'boxoffice' information from column 'boxoffice'.
-    These new columns are in a currency of origin and of type string with
-    leading currency sign.
-    """
+def split_boxoffice(df_raw: pd.DataFrame) -> pd.DataFrame:
     if 'boxoffice' not in df_raw.columns:
         raise ValueError('No "boxoffice" column in input data')
 
-    df_ = df_raw.copy(deep=False)
-    separator = 'Budget| |Gross worldwide|See detailed'
-    df_[['budget', 'boxoffice']] = (
-        df_['boxoffice']
-        .str.split(separator, expand=True)
-        .iloc[:, [1, 12]]
-        .replace({'IMDbPro': None})
-        .values
+    df_ = df_raw.reset_index()
+    df_boxoffice = (
+        pd.json_normalize(df_['boxoffice'])
     )
-    return df_
-
-
-def convert_runtime_to_minutes(hours: str, minutes: str) -> Optional[int]:
-    try:
-        return int(hours) * 60 + int(minutes)
-    except Exception:
-        return None
-
-
-def extract_runtime(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extract runtime information in a raw form from column 'techspecs'
-    and add a column 'runtime'.
-    After transformation the 'techspecs' column is removed.
-    """
-    if 'techspecs' not in df_raw.columns:
-        raise ValueError('No "techspecs" column in input data')
-
-    df_ = df_raw.copy(deep=False)
-    df_['runtime_min'] = (
-        df_['techspecs']
-        .str.split('Runtime| |Sound|Color', expand=True)
-        .replace('', '0')
-        .apply(lambda x: convert_runtime_to_minutes(x[1], x[3]), axis=1)
+    df_out = (
+        pd.concat((df_, df_boxoffice), axis=1)
+        .drop('boxoffice', axis=1)
+        .set_index('index')
     )
-    return df_.drop('techspecs', axis=1)
-
-
-def parse_actors(x) -> Dict[str, Any]:
-    dct, title_id = x['actors'], x['title_id']
-    records = {
-        'title_id': [],
-        'actor_id': [],
-        'actor_name': [],
-        'order_num': []
-    }
-    for name, ref in dct.items():
-        records['title_id'].append(title_id)
-        records['actor_id'].append(ref.split('?')[0] + '/')
-        records['actor_name'].append(name)
-        records['order_num'].append(int(ref.split('_')[-1]))
-    return records
-
-
-def parse_recommendations(x) -> Dict[str, Any]:
-    recomms, title_id = x['imdb_recommendations'], x['title_id']
-    records = {
-        'title_id': [],
-        'suggested_title_id': [],
-        'order_num': []
-    }
-    for recomm in recomms:
-        records['title_id'].append(title_id)
-        records['suggested_title_id'].append(recomm.split('?')[0])
-        records['order_num'].append(int(recomm.split('_')[-1]))
-    return records
-
-
-def parse_countries(x) -> Dict[str, Any]:
-    countries, title_id = x['country_of_origin'], x['title_id']
-    records = {
-        'title_id': [],
-        'country': [],
-        'order_num': []
-    }
-    for num, country in enumerate(countries):
-        records['title_id'].append(title_id)
-        records['country'].append(country)
-        records['order_num'].append(int(num + 1))
-    return records
-
-
-def parse_companies(x) -> Dict[str, Any]:
-    companies, title_id = x['production_company'], x['title_id']
-    records = {
-        'title_id': [],
-        'company': [],
-        'order_num': []
-    }
-    for num, company in enumerate(companies):
-        records['title_id'].append(title_id)
-        records['company'].append(company)
-        records['order_num'].append(int(num + 1))
-    return records
+    df_out.columns.name = None
+    return df_out

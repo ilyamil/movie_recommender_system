@@ -12,6 +12,7 @@ def movie_details():
             'avg_rating': '7.0/10',
             'num_votes': '2.9K'
         },
+        'genres': ['Adventure', 'Drama', 'Fantasy'],
         'original_title': 'The Dark Knight',
         'review_summary': {
             'user_review_num': '1.2K',
@@ -19,27 +20,21 @@ def movie_details():
             'metascore': '99'
         },
         'tagline': 'TaglinesGood Cop. Mad Cop.',
-        'details': (
-            'Release dateAugust 14, 2008 (Russia)'
-            'Countries of originUnited StatesUnited Kingdom'
-            'Official sitescentrumfilmowOfficial Facebook'
-            'LanguagesEnglishMandarin'
-            'Also known asBatman Begins 2'
-            'Filming locationsChicago, Illinois, USA'
-            'Production companiesWarner Bros.Legendary'
-            ' EntertainmentSyncopySee more'
-        ),
-        'boxoffice': (
-            'Budget$185,000,000 (estimated)'
-            'Gross US & Canada$534,858,444'
-            'Opening weekend US & Canada$158,411,483Jul 20, 2008'
-            'Gross worldwide$1,005,973,645'
-            'See detailed box office info on IMDbPro'
-        ),
-        'techspecs': (
-            'Runtime2 hours 32 minutesSound mixDolby Digital'
-            'SDDSDTSAspect ratio2.39 : 1'
-        ),
+        'details': {
+            'release_date': ['July 1911 (United States)'],
+            'countries_of_origin': ['Italy'],
+            'language': ['Italian', 'English'],
+            'also_known_as': ['El infierno'],
+            'production_companies': ['Milano Film', 'SAFFI-Comerio'],
+            'filming_locations': ['Bovisa, Milano, Lombardia, Italy'],
+            'runtime': '1 hour 11 minutes'
+        },
+        'boxoffice': {
+            'budget': '$185,000,000 (estimated)',
+            'boxoffice_gross_domestic': '$534,987,076',
+            'boxoffice_gross_opening': '$158,411,483',
+            'boxoffice_gross_worldwide': '$1,006,102,277'
+        },
         'actors': {
             '1': '/name/nm0660139',
             '2': '/name/nm0685283',
@@ -85,103 +80,89 @@ def test_avg_rating(movie_details):
            & (rating.at[0, 'num_votes'] == 2900.)
 
 
-# def test_split_aggregate_rating_col(movie_details):
-#     df_ = etl.split_aggregate_rating_col(movie_details)
+def test_split_aggregate_rating(movie_details):
+    df_ = etl.split_aggregate_rating(movie_details)
 
-#     assert ('rating' in df_.columns)\
-#            and ('total_votes' in df_.columns)
-#     assert 'agg_rating' not in df_.columns
-#     assert abs(df_['rating'][0] - 8.9) < 0.0001
-#     assert df_['total_votes'][0] == 99_000_000
-
-
-# def test_split_review_summary(movie_details):
-#     df_ = etl.split_review_summary(movie_details)
-#     required_cols = {
-#         'user_review_num': 125,
-#         'critic_review_num': 76,
-#         'metascore': 99
-#     }
-#     assert all(col in df_.columns for col in required_cols.keys())
-#     assert all(int(df_[col][0]) == val for col, val in required_cols.items())
-#     assert 'review_summary' not in df_.columns
+    assert ('rating' in df_.columns)\
+           and ('num_votes' in df_.columns)
+    assert 'agg_rating' not in df_.columns
+    assert abs(df_.at[0, 'rating'] - 7.0) < 1e-6
+    assert abs(df_.at[0, 'num_votes'] - 2900) < 1e6
 
 
-# def test_extract_movie_details(movie_details):
-#     df_ = etl.extract_movie_details(movie_details)
-#     required_cols = [
-#         'release_date',
-#         'country_of_origin',
-#         'production_company'
-#         # 'also_known_as': 'Batman Begins 2',
-#         # 'filming_locations': 'Chicago, Illinois, USA',
-#         # 'production_companies': 'Warner Bros.Legendary EntertainmentSyncopy'
-#     ]
-#     assert all(col in df_.columns for col in required_cols)
-#     assert df_['release_date'][0] == datetime(2008, 8, 14)
-#     assert df_['country_of_origin'][0] == ['United States', 'United Kingdom']
-#     assert df_['production_company'][0] == ['Warner Bros.',
-#                                             'Legendary Entertainment',
-#                                             'Syncopy']
-#     assert 'details' not in df_.columns
+def test_split_review_summary(movie_details):
+    df_ = etl.split_review_summary(movie_details)
+    required_cols = ['user_review_num', 'critic_review_num', 'metascore']
+    assert all(col in df_.columns for col in required_cols)
+    assert abs(df_.at[0, 'user_review_num'] - 1200) < 1e-6
+    assert df_.at[0, 'critic_review_num'] == 76
+    assert df_.at[0, 'metascore'] == 99
+    assert 'review_summary' not in df_.columns
 
 
-# def test_extract_boxoffice(movie_details):
-#     df_ = etl.extract_boxoffice(movie_details)
-#     assert ('budget' in df_.columns)\
-#         and ('boxoffice' in df_.columns)
-#     assert df_['budget'][0] == '$185,000,000'
-#     assert df_['boxoffice'][0] == '$1,005,973,645'
+def test_format_release_date(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    fmt_release_date = etl.format_release_date(df_norm)
+    assert fmt_release_date.at[0, 'release_date'].to_pydatetime()\
+           == datetime(1911, 7, 1, 0, 0)
 
 
-# def test_extract_runtime(movie_details):
-#     df_ = etl.extract_runtime(movie_details)
-#     assert 'runtime_min' in df_.columns
-#     assert df_['runtime_min'][0] == 152
-#     assert 'techspecs' not in df_.columns
+def test_split_countries_of_origin(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    df_ = etl.split_countries_of_origin(df_norm)
+    assert (df_.at[0, 'country_of_origin_1'] == 'Italy')\
+           & (df_.at[0, 'country_of_origin_2'] is None)\
+           & (df_.at[0, 'country_of_origin_3'] is None)
+    assert 'countries_of_origin' not in df_.columns
 
 
-# def test_normalize_actors(movie_details):
-#     actors = etl.normalize_actors(movie_details)
-#     required_cols = [
-#         'title_id',
-#         'actor_id',
-#         'actor_name',
-#         'order_num'
-#     ]
-#     assert all(col in actors.columns for col in required_cols)
-#     assert len(actors) == 2
-#     assert list(actors['title_id'].values) == [1, 1]
-#     assert list(actors['actor_id'].values) == ['/name/nm0000288/',
-#                                                '/name/nm0005132/']
-#     assert list(actors['actor_name'].values) == ['Christian Bale',
-#                                                  'Heath Ledger']
-#     assert list(actors['order_num'].values) == [1, 2]
+def test_split_languages(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    df_ = etl.split_language(df_norm)
+    assert df_.at[0, 'original_language'] == 'Italian'
+    assert 'language' not in df_.columns
 
 
-# def test_parse_recommendations():
-#     recomms_raw = {
-#         'title_id': 1,
-#         'imdb_recommendations': [
-#             '/title/tt1345836/?ref_=tt_sims_tt_t_1',
-#             '/title/tt1375666/?ref_=tt_sims_tt_t_2'
-#         ]
-#     }
-#     recomms_parsed = etl.parse_recommendations(recomms_raw)
-#     required_cols = ['title_id', 'suggested_title_id', 'order_num']
-#     assert all(col in recomms_parsed.keys() for col in required_cols)
-#     assert recomms_parsed['title_id'] == [1, 1]
-#     assert recomms_parsed['suggested_title_id'] == ['/title/tt1345836/',
-#                                                     '/title/tt1375666/']
-#     assert recomms_parsed['order_num'] == [1, 2]
+def test_format_aka(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    df_ = etl.format_aka(df_norm)
+    assert df_.at[0, 'also_known_as'] == 'El infierno'
 
 
-# def test_normalize_recommendations(movie_details):
-#     recomms = etl.normalize_recommendations(movie_details)
-#     required_cols = ['title_id', 'suggested_title_id', 'order_num']
-#     assert all(col in recomms.columns for col in required_cols)
-#     assert len(recomms) == 2
-#     assert list(recomms['title_id'].values) == [1, 1]
-#     assert list(recomms['suggested_title_id'].values) == ['/title/tt1345836/',
-#                                                           '/title/tt1375666/']
-#     assert list(recomms['order_num'].values) == [1, 2]
+def test_split_production_companies(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    df_ = etl.split_production_companies(df_norm)
+    assert df_.at[0, 'production_company_1'] == 'Milano Film'
+    assert df_.at[0, 'production_company_2'] == 'SAFFI-Comerio'
+    assert 'production_companies' not in df_.columns
+
+
+def test_split_filming_locations(movie_details):
+    df_norm = pd.json_normalize(movie_details['details'])
+    df_ = etl.split_filming_locations(df_norm)
+    assert df_.at[0, 'filming_location'] == 'Bovisa, Milano, Lombardia, Italy'
+    assert df_.at[0, 'filming_country'] == 'Italy'
+    assert 'filming_locations' not in df_.columns
+
+
+def test_split_genres(movie_details):
+    df_genres = etl.split_movie_genres(movie_details)
+    assert df_genres.at[0, 'genre_1'] == 'Adventure'
+    assert df_genres.at[0, 'genre_2'] == 'Drama'
+    assert df_genres.at[0, 'genre_3'] == 'Fantasy'
+    assert 'genres' not in df_genres.columns
+
+
+def test_split_boxoffice(movie_details):
+    df_ = etl.split_boxoffice(movie_details)
+    required_cols = [
+        'budget',
+        'boxoffice_gross_domestic',
+        'boxoffice_gross_opening',
+        'boxoffice_gross_worldwide'
+    ]
+    assert all(c in df_.columns for c in required_cols)
+    assert df_.at[0, 'budget'] == '$185,000,000 (estimated)'
+    assert df_.at[0, 'boxoffice_gross_domestic'] == '$534,987,076'
+    assert df_.at[0, 'boxoffice_gross_opening'] == '$158,411,483'
+    assert df_.at[0, 'boxoffice_gross_worldwide'] == '$1,006,102,277'
