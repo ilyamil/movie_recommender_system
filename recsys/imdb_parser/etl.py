@@ -356,7 +356,10 @@ def format_release_date(df_raw: pd.DataFrame) -> pd.DataFrame:
         [0]
         .str.rstrip()
     )
-    df_['release_date'] = pd.to_datetime(rd, errors='coerce')
+    df_['release_date'] = (
+        pd.to_datetime(rd, errors='coerce')
+        .dt.strftime('%Y-%m-%d')
+    )
     return df_
 
 
