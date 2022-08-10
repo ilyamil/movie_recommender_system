@@ -225,7 +225,7 @@ def split_helpfulness_col(df_raw: pd.DataFrame) -> pd.DataFrame:
     df_[['upvotes', 'total_votes']] = (
         df_['helpfulness']
         .str.replace(',', '')
-        .str.extractall('(\d+)')
+        .str.extractall('(\d+)') # noqa
         .unstack('match')
         .values
         .astype('float32')
