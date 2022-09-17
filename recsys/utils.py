@@ -9,9 +9,12 @@ from io import BytesIO
 from PIL import Image
 from logging import Logger, basicConfig, getLogger
 from typing import Dict, Any
-from tenacity import (retry, wait_random,
-                      stop_after_attempt,
-                      retry_if_exception_type)
+from tenacity import (
+    retry,
+    wait_random,
+    stop_after_attempt,
+    retry_if_exception_type
+)
 
 
 DIR_PATH = os.path.dirname(__file__)

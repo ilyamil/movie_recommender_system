@@ -27,7 +27,7 @@ class ReviewsETL:
                     or (not self._storage_options['secret']):
                 raise ValueError(
                     'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
-                    + ' must be specified in environment variables'
+                    ' must be specified in environment variables'
                 )
 
             self._bucket = os.getenv('AWS_S3_BUCKET')
@@ -42,7 +42,7 @@ class ReviewsETL:
         elif self._mode == 'local':
             self._storage_options = None
 
-            root_dir = str(Path(__file__).parents[2])
+            root_dir = Path(__file__).parents[2].as_posix()
             self._metadata_file = os.path.join(
                 root_dir,
                 'data',
@@ -151,7 +151,7 @@ class MetadataETL:
                     or (not self._storage_options['secret']):
                 raise ValueError(
                     'AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY'
-                    + ' must be specified in environment variables'
+                    ' must be specified in environment variables'
                 )
 
             self._bucket = os.getenv('AWS_S3_BUCKET')

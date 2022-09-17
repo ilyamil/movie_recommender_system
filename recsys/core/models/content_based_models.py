@@ -1,11 +1,10 @@
-import os
 import sys
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict
 from sklearn.metrics.pairwise import cosine_similarity
 
-ROOT_FOLDER = str(Path(__file__).resolve().parents[3])
+ROOT_FOLDER = Path(__file__).resolve().parents[3].as_posix()
 sys.path.append(ROOT_FOLDER)
 
 from recsys.core.models.base_recommender import BaseRecommender # noqa
